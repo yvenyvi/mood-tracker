@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "307923968626",
+    "project_id": "emote-3df9d",
+    "storage_bucket": "emote-3df9d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:307923968626:android:6108bff9a8d5657bb198eb",
+        "android_client_info": {
+          "package_name": "com.example.mood_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqsQD6YiaLYIWKaQ93v2dLGomLLNjB62A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
