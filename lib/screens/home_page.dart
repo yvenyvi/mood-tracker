@@ -7,6 +7,8 @@ import 'package:mood_tracker/utils/daily_messages.dart';
 import 'package:mood_tracker/screens/mood_entry_page.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
+import 'package:provider/provider.dart';
+import 'package:mood_tracker/services/auth_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,14 +17,37 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   DateTime _selectedMonth = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Rebuild to update DateTime.now() references in UI
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: _buildDrawer(user),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -30,18 +55,21 @@ class _HomePageState extends State<HomePage> {
         leadingWidth: 70,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: AppColors.pastelBlue,
-            child: user?.photoURL != null
-                ? ClipOval(
-                    child: Image.network(
-                      user!.photoURL!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _buildInitialsAvatar(user),
-                    ),
-                  )
-                : _buildInitialsAvatar(user),
+          child: GestureDetector(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            child: CircleAvatar(
+              backgroundColor: AppColors.pastelBlue,
+              child: user?.photoURL != null
+                  ? ClipOval(
+                      child: Image.network(
+                        user!.photoURL!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildInitialsAvatar(user),
+                      ),
+                    )
+                  : _buildInitialsAvatar(user),
+            ),
           ),
         ),
         actions: [
@@ -56,11 +84,13 @@ class _HomePageState extends State<HomePage> {
               Icons.add_circle_outline,
               color: AppColors.darkText,
             ),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const MoodEntryPage()),
               );
+              // Refresh state when returning from mood entry
+              setState(() {});
             },
           ),
           const SizedBox(width: 8),
@@ -99,14 +129,87 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildInitialsAvatar(User? user) {
+  Widget _buildDrawer(User? user) {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.85,
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(color: AppColors.pastelBlue),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: user?.photoURL != null
+                  ? ClipOval(
+                      child: Image.network(
+                        user!.photoURL!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildInitialsAvatar(
+                              user,
+                              textColor: AppColors.pastelBlue,
+                            ),
+                      ),
+                    )
+                  : _buildInitialsAvatar(user, textColor: AppColors.pastelBlue),
+            ),
+            accountName: Text(
+              user?.displayName ?? 'Friend',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            accountEmail: Text(
+              user?.email ?? '',
+              style: const TextStyle(color: Colors.white70),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person_outline),
+            title: const Text('Profile'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              // TODO: Navigate to Profile
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile coming soon!')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.analytics_outlined),
+            title: const Text('Analytics'),
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Navigate to Analytics
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Analytics coming soon!')),
+              );
+            },
+          ),
+          const Spacer(),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () async {
+              Navigator.pop(context);
+              await context.read<AuthService>().signOut();
+            },
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInitialsAvatar(User? user, {Color textColor = Colors.white}) {
     final displayName = user?.displayName ?? user?.email ?? 'Guest';
     final initials = _getInitials(displayName);
 
     return Text(
       initials,
-      style: const TextStyle(
-        color: Colors.white,
+      style: TextStyle(
+        color: textColor,
         fontWeight: FontWeight.bold,
         fontSize: 18,
       ),
@@ -469,7 +572,9 @@ class _HomePageState extends State<HomePage> {
         if (snapshot.hasData) {
           for (var doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
-            final timestamp = (data['timestamp'] as Timestamp).toDate();
+            final timestamp = (data['timestamp'] as Timestamp)
+                .toDate()
+                .toLocal();
             final date = DateTime(
               timestamp.year,
               timestamp.month,
@@ -568,8 +673,31 @@ class _HomePageState extends State<HomePage> {
                       margin: const EdgeInsets.all(2),
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: moodColor ?? Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: hasMood
+                            ? RadialGradient(
+                                center: const Alignment(-0.5, -0.5),
+                                radius: 1.2,
+                                colors: [
+                                  Color.lerp(
+                                    moodColor,
+                                    Colors.white,
+                                    0.6,
+                                  )!, // Highlight
+                                  moodColor!,
+                                ],
+                              )
+                            : null,
+                        color: hasMood ? null : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: hasMood
+                            ? [
+                                BoxShadow(
+                                  color: moodColor!.withAlpha(100),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : null,
                         border:
                             date.day == DateTime.now().day &&
                                 date.month == DateTime.now().month &&
@@ -603,17 +731,17 @@ class _HomePageState extends State<HomePage> {
     switch ((mood ?? 'neutral').toLowerCase()) {
       case 'happy':
       case 'good':
-        return const Color(0xFFFDFD96); // Yellow
+        return Colors.amber; // Darker Yellow/Amber
       case 'sad':
       case 'bad':
-        return const Color(0xFFAEC6CF); // Blue
+        return const Color(0xFF42A5F5); // Blue 400
       case 'angry':
       case 'terrible':
-        return const Color(0xFFFFB3BA); // Red
+        return const Color(0xFFEF5350); // Red 400
       case 'anxious':
-        return const Color(0xFFB39EB5); // Purple
+        return const Color(0xFFAB47BC); // Purple 400
       case 'great':
-        return const Color(0xFFB2F7EF); // Mint Green
+        return const Color(0xFF26A69A); // Teal 400
       case 'netural':
       case 'okay':
       default:
@@ -633,7 +761,8 @@ class _HomePageState extends State<HomePage> {
       ),
       builder: (context) {
         final firstTimestamp = (entries.first['timestamp'] as Timestamp)
-            .toDate();
+            .toDate()
+            .toLocal();
 
         return Container(
           constraints: BoxConstraints(
@@ -660,7 +789,8 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     final moodData = entries[index];
                     final timestamp = (moodData['timestamp'] as Timestamp)
-                        .toDate();
+                        .toDate()
+                        .toLocal();
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

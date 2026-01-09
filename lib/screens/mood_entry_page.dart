@@ -61,7 +61,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             'intensity': _selectedMood,
             'mood': _moodLabels[_selectedMood],
             'note': _noteController.text.trim(),
-            'timestamp': FieldValue.serverTimestamp(),
+            'timestamp': DateTime.now(),
           });
 
       if (mounted) {

@@ -1,0 +1,37 @@
+mood: 
+happy - joy, content, gratitude
+sad - low mood, loneliness, grief
+neutral - calm, OK, emotionally flat
+angry - irritation, frustration, rage
+anxiuous - worry, nervousness, fear
+
+optional moods: 
+stress- pressure, burnout, 
+excited - anticipation, motivation
+tired/drained - emotional/mental exhaustion
+
+mood intentsity - low, medium, high, 1 to 5
+
+mood triggers
+
+analytics - daily, weekly, monthly:
+mood patterns and summary
+
+mood gentle reflections every mood triggers e.g "What would you tell yourself right now?" "how did you recover yourself?"
+
+emotional and safety comfort features:
+1. comfort mode and reasurrance.
+2. use words of assurance, not words of judgement.
+3. mood colors. happy - yellow, sad - blue, angry - red, neutral - gray, anxious - purple
+4. emotional replay (summary of emotions per day/week/month)
+5. focus on awareness, not solution. 
+
+emotional honesty features:
+delayed understanding options: "idk how I feel" option.
+memory: emotional land mark.
+refraining view:
+psychologically inspired: 
+coping library: let users build their own coping lists
+
+optional:
+body and behaviour - connect emotions/moods to physical response
