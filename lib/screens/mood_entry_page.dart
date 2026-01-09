@@ -14,28 +14,69 @@ class MoodEntryPage extends StatefulWidget {
 
 class _MoodEntryPageState extends State<MoodEntryPage> {
   final _noteController = TextEditingController();
-  int _selectedMood = 3; // Default to 'Okay' (3)
+  final _triggerController = TextEditingController();
+
+  String _selectedMood = 'Neutral'; // Default category
   bool _isSaving = false;
+  final Set<String> _selectedEmotions = {};
 
-  final Map<int, String> _moodLabels = {
-    1: 'Terrible',
-    2: 'Bad',
-    3: 'Okay',
-    4: 'Good',
-    5: 'Great',
+  final List<String> _moodCategories = [
+    'Happy',
+    'Sad',
+    'Neutral',
+    'Angry',
+    'Anxious',
+    'Stress',
+    'Excited',
+    'Tired',
+  ];
+
+  final Map<String, List<String>> _emotionsData = {
+    'Happy': ['Joy', 'Content', 'Gratitude'],
+    'Sad': ['Low mood', 'Loneliness', 'Grief'],
+    'Neutral': ['Calm', 'OK', 'Emotionally flat'],
+    'Angry': ['Irritation', 'Frustration', 'Rage'],
+    'Anxious': ['Worry', 'Nervousness', 'Fear'],
+    'Stress': ['Pressure', 'Burnout'],
+    'Excited': ['Anticipation', 'Motivation'],
+    'Tired': ['Emotional exhaustion', 'Mental exhaustion'],
   };
 
-  final Map<int, Color> _moodColors = {
-    1: Colors.red,
-    2: Colors.orange,
-    3: Colors.amber,
-    4: Colors.lightGreen,
-    5: Colors.green,
+  final Map<String, Color> _moodColors = {
+    'Happy': Colors.amber,
+    'Sad': const Color(0xFF42A5F5), // Blue 400
+    'Neutral': Colors.grey,
+    'Angry': const Color(0xFFEF5350), // Red 400
+    'Anxious': const Color(0xFFAB47BC), // Purple 400
+    'Stress': const Color(0xFFFF7043), // Orange 400
+    'Excited': const Color(0xFF26A69A), // Teal 400
+    'Tired': const Color(0xFF78909C), // Blue Grey 400
   };
+
+  // Map categories to approximate intensity (1-5) for backward compatibility/analytics
+  int _getIntensity(String mood) {
+    switch (mood) {
+      case 'Happy':
+      case 'Excited':
+        return 5;
+      case 'Neutral':
+        return 3;
+      case 'Tired':
+        return 2; // Low energy
+      case 'Sad':
+      case 'Angry':
+      case 'Anxious':
+      case 'Stress':
+        return 1; // Negative
+      default:
+        return 3;
+    }
+  }
 
   @override
   void dispose() {
     _noteController.dispose();
+    _triggerController.dispose();
     super.dispose();
   }
 
@@ -58,9 +99,11 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           .doc(user.uid)
           .collection('moods')
           .add({
-            'intensity': _selectedMood,
-            'mood': _moodLabels[_selectedMood],
+            'intensity': _getIntensity(_selectedMood),
+            'mood': _selectedMood,
             'note': _noteController.text.trim(),
+            'trigger': _triggerController.text.trim(),
+            'emotions': _selectedEmotions.toList(),
             'timestamp': DateTime.now(),
           });
 
@@ -69,7 +112,11 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           const SnackBar(content: Text('Mood saved successfully!')),
         );
         _noteController.clear();
-        setState(() => _selectedMood = 3); // Reset
+        _triggerController.clear();
+        setState(() {
+          _selectedMood = 'Neutral';
+          _selectedEmotions.clear();
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -84,9 +131,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Get user name if available
     final user = Provider.of<AuthService>(context).user;
     final displayName = user?.displayName ?? 'Friend';
+    final currentColor = _moodColors[_selectedMood] ?? Colors.grey;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mood Tracker')),
@@ -110,61 +157,136 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             ),
             const SizedBox(height: 32),
 
-            // Mood Selector
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: _moodLabels.keys.map((moodValue) {
-                final isSelected = _selectedMood == moodValue;
+            // Primary Mood Selector (Grid of Categories)
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: _moodCategories.map((mood) {
+                final isSelected = _selectedMood == mood;
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedMood = moodValue),
+                  onTap: () {
+                    setState(() {
+                      _selectedMood = mood;
+                      _selectedEmotions
+                          .clear(); // Clear specific emotions when category changes
+                    });
+                  },
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: EdgeInsets.all(isSelected ? 4 : 0),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: isSelected
-                              ? Border.all(
-                                  color: _moodColors[moodValue]!,
-                                  width: 2,
-                                )
-                              : null,
-                        ),
-                        child: Opacity(
-                          opacity: isSelected ? 1.0 : 0.5,
-                          child: Lottie.network(
-                            MoodAssets.getUrl(moodValue),
-                            width: isSelected ? 60 : 50,
-                            height: isSelected ? 60 : 50,
-                            animate: true, // Always animate
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                Icons.error,
-                                size: isSelected ? 48 : 40,
-                                color: Colors.grey,
-                              );
-                            },
+                      SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: EdgeInsets.all(isSelected ? 4 : 0),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: isSelected
+                                  ? Border.all(
+                                      color: _moodColors[mood] ?? Colors.grey,
+                                      width: 2,
+                                    )
+                                  : null,
+                            ),
+                            child: Opacity(
+                              opacity: isSelected ? 1.0 : 0.5,
+                              child: Lottie.network(
+                                MoodAssets.getCategoryUrl(mood),
+                                width: isSelected ? 60 : 50,
+                                height: isSelected ? 60 : 50,
+                                animate: true, // Always animate
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.error,
+                                    size: isSelected ? 48 : 40,
+                                    color: Colors.grey,
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _moodLabels[moodValue]!,
+                        mood,
                         style: TextStyle(
-                          color: isSelected
-                              ? _moodColors[moodValue]
-                              : Colors.grey,
+                          fontSize: 12,
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
-                          fontSize: 12,
+                          color: isSelected ? _moodColors[mood] : Colors.grey,
                         ),
                       ),
                     ],
                   ),
                 );
               }).toList(),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Specific Emotions Chips (Context Aware)
+            Text(
+              'What specifically?',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: (_emotionsData[_selectedMood] ?? []).map((emotion) {
+                final isSelected = _selectedEmotions.contains(emotion);
+                return FilterChip(
+                  label: Text(emotion),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedEmotions.add(emotion);
+                      } else {
+                        _selectedEmotions.remove(emotion);
+                      }
+                    });
+                  },
+                  backgroundColor: Colors.grey[100],
+                  selectedColor: currentColor.withAlpha(50),
+                  checkmarkColor: currentColor,
+                  labelStyle: TextStyle(
+                    color: isSelected ? currentColor : Colors.black87,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                  side: isSelected ? BorderSide(color: currentColor) : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Trigger Input
+            Text(
+              'What triggered this?',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _triggerController,
+              decoration: const InputDecoration(
+                hintText: 'e.g., Work deadline, Argument with friend...',
+                border: OutlineInputBorder(),
+              ),
             ),
 
             const SizedBox(height: 32),
@@ -187,11 +309,17 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               onPressed: _isSaving ? null : _saveMood,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: _moodColors[_selectedMood],
+                backgroundColor: currentColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: _isSaving
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Save Entry', style: TextStyle(fontSize: 18)),
+                  : const Text(
+                      'Save Entry',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
             ),
           ],
         ),

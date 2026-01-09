@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && mounted) {
       // Rebuild to update DateTime.now() references in UI
       setState(() {});
     }
@@ -90,7 +90,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 MaterialPageRoute(builder: (context) => const MoodEntryPage()),
               );
               // Refresh state when returning from mood entry
-              setState(() {});
+              if (mounted) {
+                setState(() {});
+              }
             },
           ),
           const SizedBox(width: 8),

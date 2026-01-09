@@ -10,6 +10,18 @@ class MoodAssets {
     5: '$_baseUrl/1f929/lottie.json', // Great (Star-struck)
   };
 
+  static const Map<String, String> categoryLottieUrls = {
+    'Happy': '$_baseUrl/1f60a/lottie.json', // Smiling Face with Smiling Eyes
+    'Sad': '$_baseUrl/1f622/lottie.json', // Crying Face
+    'Neutral': '$_baseUrl/1f610/lottie.json', // Neutral Face
+    'Angry': '$_baseUrl/1f621/lottie.json', // Pouting Face
+    'Anxious':
+        '$_baseUrl/1f630/lottie.json', // Face with Open Mouth and Cold Sweat
+    'Stress': '$_baseUrl/1f92f/lottie.json', // Exploding Head
+    'Excited': '$_baseUrl/1f929/lottie.json', // Star-Struck
+    'Tired': '$_baseUrl/1f634/lottie.json', // Sleeping Face
+  };
+
   static const Map<int, String> moodLabels = {
     1: 'Terrible',
     2: 'Bad',
@@ -20,6 +32,10 @@ class MoodAssets {
 
   static String getUrl(int intensity) {
     return moodLottieUrls[intensity] ?? moodLottieUrls[3]!;
+  }
+
+  static String getCategoryUrl(String category) {
+    return categoryLottieUrls[category] ?? moodLottieUrls[3]!;
   }
 
   static int getIntensity(String label) {
