@@ -16,9 +16,15 @@ class AppTheme {
   // Pastel Palette
   static const Color mintGreen = Color(0xFFB2F7EF);
   static const Color softPeach = Color(0xFFFFDAC1);
-  static const Color lavender = Color(
-    0xFFE2F0CB,
-  ); // Actually more of a light green/yellow mix in some palettes, let's go with a true lavender
+  static const Color softPeachDarker = Color(
+    0xFFFFCCB0,
+  ); // Slightly darker peach
+
+  static const Color lavender = Color(0xFFE2F0CB);
+  static const Color lavenderDarker = Color(
+    0xFFC5E1A5,
+  ); // Slightly darker green/lavender
+
   static const Color trueLavender = Color(0xFFE0BBE4);
   static const Color skyBlue = Color(0xFF957DAD); // A muted purple-blue
   static const Color lightSkyBlue = Color(0xFFC7CEEA);
@@ -36,7 +42,7 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: lightSkyBlue,
         primary: lightSkyBlue,
-        secondary: softPeach,
+        secondary: softPeachDarker,
         surface: surfaceWhite,
         error: Color(0xFFFFB7B2), // Pastel Red
         onPrimary: textDark,
@@ -110,7 +116,7 @@ class AppTheme {
         seedColor: skyBlue,
         brightness: Brightness.dark,
         primary: skyBlue,
-        secondary: lavender,
+        secondary: lavenderDarker,
         surface: const Color(0xFF1E1E1E),
         error: const Color(0xFFCF6679),
         onPrimary: Colors.white,
