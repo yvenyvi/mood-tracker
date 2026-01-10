@@ -41,13 +41,54 @@ class MoodAssets {
   }
 
   static int getIntensity(String label) {
-    return moodLabels.entries
-        .firstWhere(
-          (entry) => entry.value.toLowerCase() == label.toLowerCase(),
-          orElse: () => const MapEntry(3, 'Okay'),
-        )
-        .key;
+    switch (label) {
+      case 'Happy':
+      case 'Excited':
+      case 'Great': // Legacy
+      case 'Good': // Legacy
+        return 5;
+      case 'Neutral':
+      case 'Okay': // Legacy
+        return 3;
+      case 'Tired':
+        return 2;
+      case 'Sad':
+      case 'Angry':
+      case 'Anxious':
+      case 'Stress':
+      case 'Bad': // Legacy
+      case 'Terrible': // Legacy
+        return 1;
+      default:
+        return 3;
+    }
   }
+
+  static const List<String> categories = [
+    'Happy',
+    'Sad',
+    'Neutral',
+    'Angry',
+    'Anxious',
+    'Stress',
+    'Excited',
+    'Tired',
+  ];
+
+  static const Map<String, List<String>> emotions = {
+    'Happy': ['Joy', 'Content', 'Gratitude'],
+    'Sad': ['Low mood', 'Loneliness', 'Grief'],
+    'Neutral': ['Calm', 'OK', 'Emotionally flat'],
+    'Angry': ['Irritation', 'Frustration', 'Rage'],
+    'Anxious': ['Worry', 'Nervousness', 'Fear'],
+    'Stress': ['Pressure', 'Burnout'],
+    'Excited': ['Anticipation', 'Motivation', 'Enthusiasm'],
+    'Tired': [
+      'Emotional exhaustion',
+      'Mental exhaustion',
+      'Physical exhaustion',
+    ],
+  };
 
   static const Map<String, Color> _moodColors = {
     'Happy': Colors.amber,

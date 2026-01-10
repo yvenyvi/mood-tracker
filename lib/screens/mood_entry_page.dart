@@ -20,58 +20,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   bool _isSaving = false;
   final Set<String> _selectedEmotions = {};
 
-  final List<String> _moodCategories = [
-    'Happy',
-    'Sad',
-    'Neutral',
-    'Angry',
-    'Anxious',
-    'Stress',
-    'Excited',
-    'Tired',
-  ];
-
-  final Map<String, List<String>> _emotionsData = {
-    'Happy': ['Joy', 'Content', 'Gratitude'],
-    'Sad': ['Low mood', 'Loneliness', 'Grief'],
-    'Neutral': ['Calm', 'OK', 'Emotionally flat'],
-    'Angry': ['Irritation', 'Frustration', 'Rage'],
-    'Anxious': ['Worry', 'Nervousness', 'Fear'],
-    'Stress': ['Pressure', 'Burnout'],
-    'Excited': ['Anticipation', 'Motivation'],
-    'Tired': ['Emotional exhaustion', 'Mental exhaustion'],
-  };
-
-  final Map<String, Color> _moodColors = {
-    'Happy': Colors.amber,
-    'Sad': const Color(0xFF42A5F5), // Blue 400
-    'Neutral': Colors.grey,
-    'Angry': const Color(0xFFEF5350), // Red 400
-    'Anxious': const Color(0xFFAB47BC), // Purple 400
-    'Stress': const Color(0xFFFF7043), // Orange 400
-    'Excited': const Color(0xFF26A69A), // Teal 400
-    'Tired': const Color(0xFF78909C), // Blue Grey 400
-  };
-
   // Map categories to approximate intensity (1-5) for backward compatibility/analytics
-  int _getIntensity(String mood) {
-    switch (mood) {
-      case 'Happy':
-      case 'Excited':
-        return 5;
-      case 'Neutral':
-        return 3;
-      case 'Tired':
-        return 2; // Low energy
-      case 'Sad':
-      case 'Angry':
-      case 'Anxious':
-      case 'Stress':
-        return 1; // Negative
-      default:
-        return 3;
-    }
-  }
 
   @override
   void dispose() {
@@ -99,7 +48,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           .doc(user.uid)
           .collection('moods')
           .add({
-            'intensity': _getIntensity(_selectedMood),
+            'intensity': MoodAssets.getIntensity(_selectedMood),
             'mood': _selectedMood,
             'note': _noteController.text.trim(),
             'trigger': _triggerController.text.trim(),
@@ -133,7 +82,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   Widget build(BuildContext context) {
     final user = Provider.of<AuthService>(context).user;
     final displayName = user?.displayName ?? 'Friend';
-    final currentColor = _moodColors[_selectedMood] ?? Colors.grey;
+    final currentColor = MoodAssets.getMoodColor(_selectedMood);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mood Tracker')),
@@ -162,7 +111,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               spacing: 12,
               runSpacing: 12,
               alignment: WrapAlignment.center,
-              children: _moodCategories.map((mood) {
+              children: MoodAssets.categories.map((mood) {
                 final isSelected = _selectedMood == mood;
                 return GestureDetector(
                   onTap: () {
@@ -186,7 +135,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                               shape: BoxShape.circle,
                               border: isSelected
                                   ? Border.all(
-                                      color: _moodColors[mood] ?? Colors.grey,
+                                      color: MoodAssets.getMoodColor(mood),
                                       width: 2,
                                     )
                                   : null,
@@ -221,7 +170,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                               ? FontWeight.bold
                               : FontWeight.normal,
                           color: isSelected
-                              ? _moodColors[mood]
+                              ? MoodAssets.getMoodColor(mood)
                               : Theme.of(
                                   context,
                                 ).colorScheme.onSurface.withAlpha(153),
@@ -246,7 +195,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: (_emotionsData[_selectedMood] ?? []).map((emotion) {
+              children: (MoodAssets.emotions[_selectedMood] ?? []).map((
+                emotion,
+              ) {
                 final isSelected = _selectedEmotions.contains(emotion);
                 final isDark = Theme.of(context).brightness == Brightness.dark;
 
