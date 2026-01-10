@@ -496,8 +496,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       height: 40,
                       animate: true,
                     ),
-                    AppColors
-                        .pastelGreen, // Keep this one as is or theme it too? It's a specific green.
+                    AppColors.pastelGreen,
                   ),
                 ],
               ),
