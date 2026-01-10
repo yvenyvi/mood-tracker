@@ -2,6 +2,7 @@ import 'package:mood_tracker/screens/home_page.dart';
 import 'package:mood_tracker/screens/login_page.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/theme/app_theme.dart';
+import 'package:mood_tracker/providers/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -19,7 +20,10 @@ void main() async {
   }
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthService())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
       child: const EmoteApp(),
     ),
   );
@@ -30,10 +34,16 @@ class EmoteApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Emote',
-      theme: AppTheme.lightTheme,
-      home: const AuthWrapper(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Emote',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          home: const AuthWrapper(),
+        );
+      },
     );
   }
 }

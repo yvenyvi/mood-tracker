@@ -202,7 +202,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                                   return Icon(
                                     Icons.error,
                                     size: isSelected ? 48 : 40,
-                                    color: Colors.grey,
+                                    color: Theme.of(
+                                      context,
+                                    ).unselectedWidgetColor,
                                   );
                                 },
                               ),
@@ -218,7 +220,11 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
-                          color: isSelected ? _moodColors[mood] : Colors.grey,
+                          color: isSelected
+                              ? _moodColors[mood]
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withAlpha(153),
                         ),
                       ),
                     ],
@@ -242,6 +248,8 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               runSpacing: 8,
               children: (_emotionsData[_selectedMood] ?? []).map((emotion) {
                 final isSelected = _selectedEmotions.contains(emotion);
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+
                 return FilterChip(
                   label: Text(emotion),
                   selected: isSelected,
@@ -254,16 +262,24 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                       }
                     });
                   },
-                  backgroundColor: Colors.grey[100],
-                  selectedColor: currentColor.withAlpha(50),
-                  checkmarkColor: currentColor,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).inputDecorationTheme.fillColor,
+                  selectedColor: currentColor.withAlpha(isDark ? 100 : 50),
+                  checkmarkColor: isSelected
+                      ? (isDark ? Colors.white : currentColor)
+                      : null,
                   labelStyle: TextStyle(
-                    color: isSelected ? currentColor : Colors.black87,
+                    color: isSelected
+                        ? (isDark ? Colors.white : currentColor)
+                        : Theme.of(context).textTheme.bodyLarge?.color,
                     fontWeight: isSelected
                         ? FontWeight.bold
                         : FontWeight.normal,
                   ),
-                  side: isSelected ? BorderSide(color: currentColor) : null,
+                  side: isSelected
+                      ? BorderSide(color: currentColor)
+                      : BorderSide.none,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

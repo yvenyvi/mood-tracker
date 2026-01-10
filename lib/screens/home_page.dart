@@ -9,6 +9,7 @@ import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:provider/provider.dart';
 import 'package:mood_tracker/services/auth_service.dart';
+import 'package:mood_tracker/screens/settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -49,40 +50,51 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       key: _scaffoldKey,
       drawer: _buildDrawer(user),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
         leadingWidth: 70,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: GestureDetector(
             onTap: () => _scaffoldKey.currentState?.openDrawer(),
             child: CircleAvatar(
-              backgroundColor: AppColors.pastelBlue,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
               child: user?.photoURL != null
                   ? ClipOval(
                       child: Image.network(
                         user!.photoURL!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            _buildInitialsAvatar(user),
+                            _buildInitialsAvatar(
+                              user,
+                              textColor: Theme.of(
+                                context,
+                              ).colorScheme.onSecondary,
+                            ),
                       ),
                     )
-                  : _buildInitialsAvatar(user),
+                  : _buildInitialsAvatar(
+                      user,
+                      textColor: Theme.of(context).colorScheme.onSecondary,
+                    ),
             ),
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: AppColors.darkText),
+            icon: Icon(
+              Icons.search,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             onPressed: () {
               // TODO: Implement search functionality
             },
           ),
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.add_circle_outline,
-              color: AppColors.darkText,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             onPressed: () async {
               await Navigator.push(
@@ -99,7 +111,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: Colors.grey[200], height: 1.0),
+          child: Container(color: Theme.of(context).dividerColor, height: 1.0),
         ),
       ),
       body: SafeArea(
@@ -132,14 +144,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Widget _buildDrawer(User? user) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Drawer(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       width: MediaQuery.of(context).size.width * 0.85,
       child: Column(
         children: [
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: AppColors.pastelBlue),
+            decoration: BoxDecoration(color: colorScheme.secondary),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: colorScheme.surface,
               child: user?.photoURL != null
                   ? ClipOval(
                       child: Image.network(
@@ -148,27 +162,33 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         errorBuilder: (context, error, stackTrace) =>
                             _buildInitialsAvatar(
                               user,
-                              textColor: AppColors.pastelBlue,
+                              textColor: colorScheme.secondary,
                             ),
                       ),
                     )
-                  : _buildInitialsAvatar(user, textColor: AppColors.pastelBlue),
+                  : _buildInitialsAvatar(
+                      user,
+                      textColor: colorScheme.secondary,
+                    ),
             ),
             accountName: Text(
               user?.displayName ?? 'Friend',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: colorScheme.onSecondary,
               ),
             ),
             accountEmail: Text(
               user?.email ?? '',
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: colorScheme.onSecondary.withAlpha(179)),
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('Profile'),
+            leading: Icon(Icons.person_outline, color: colorScheme.onSurface),
+            title: Text(
+              'Profile',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
             onTap: () {
               Navigator.pop(context); // Close drawer
               // TODO: Navigate to Profile
@@ -178,8 +198,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.analytics_outlined),
-            title: const Text('Analytics'),
+            leading: Icon(
+              Icons.analytics_outlined,
+              color: colorScheme.onSurface,
+            ),
+            title: Text(
+              'Analytics',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
             onTap: () {
               Navigator.pop(context);
               // TODO: Navigate to Analytics
@@ -188,11 +214,28 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               );
             },
           ),
-          const Spacer(),
-          const Divider(),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            leading: Icon(
+              Icons.settings_outlined,
+              color: colorScheme.onSurface,
+            ),
+            title: Text(
+              'Settings',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+          ),
+          const Spacer(),
+          Divider(color: Theme.of(context).dividerColor),
+          ListTile(
+            leading: Icon(Icons.logout, color: colorScheme.error),
+            title: Text('Logout', style: TextStyle(color: colorScheme.error)),
             onTap: () async {
               Navigator.pop(context);
               await context.read<AuthService>().signOut();
@@ -266,8 +309,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.pastelBlue.withAlpha(77),
-            AppColors.pastelPink.withAlpha(77),
+            Theme.of(context).colorScheme.primary.withAlpha(77),
+            Theme.of(context).colorScheme.secondary.withAlpha(77),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -276,19 +319,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.emoji_emotions,
-            color: AppColors.pastelBlue,
+            color: Theme.of(context).colorScheme.primary,
             size: 32,
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               DailyMessages.getMessageOfTheDay(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: AppColors.darkText,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -321,11 +364,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withAlpha(26),
+                  color: Colors.black.withAlpha(13),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -337,16 +380,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   children: [
                     Icon(
                       Icons.analytics_outlined,
-                      color: AppColors.pastelBlue,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 24,
                     ),
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Today\'s Mood',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.darkText,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -354,7 +397,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 const SizedBox(height: 16),
                 Text(
                   'No mood entries yet today',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
                 ),
               ],
             ),
@@ -392,11 +437,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor, // Use card color from theme
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withAlpha(26),
+                color: Colors.black.withAlpha(13),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -409,16 +454,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 children: [
                   Icon(
                     Icons.analytics_outlined,
-                    color: AppColors.pastelBlue,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'Today\'s Mood',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkText,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -430,13 +475,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   _buildAnalyticCard(
                     'Entries',
                     entryCount.toString(),
-                    AppColors.pastelBlue,
+                    Theme.of(context).colorScheme.primary,
                     icon: Icons.edit_note,
                   ),
                   _buildAnalyticCard(
                     'Avg Intensity',
                     avgIntensity,
-                    AppColors.pastelPink,
+                    Theme.of(context).colorScheme.secondary,
                     icon: Icons.trending_up,
                   ),
                   _buildAnalyticCard(
@@ -450,7 +495,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       height: 40,
                       animate: true,
                     ),
-                    AppColors.pastelGreen,
+                    AppColors
+                        .pastelGreen, // Keep this one as is or theme it too? It's a specific green.
                   ),
                 ],
               ),
@@ -633,7 +679,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       day,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                   ),
@@ -666,6 +712,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ? _getMoodColor(moodData[date]!.first['mood'] ?? 'neutral')
                     : null;
 
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+
                 return Expanded(
                   child: GestureDetector(
                     onTap: hasMood
@@ -682,14 +730,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 colors: [
                                   Color.lerp(
                                     moodColor,
-                                    Colors.white,
-                                    0.6,
+                                    isDark ? Colors.black : Colors.white,
+                                    0.4, // Reduced lerp intensity for dark mode to optimize visibility
                                   )!, // Highlight
                                   moodColor!,
                                 ],
                               )
                             : null,
-                        color: hasMood ? null : Colors.grey[200],
+                        color: hasMood
+                            ? null
+                            : Theme.of(context)
+                                  .inputDecorationTheme
+                                  .fillColor, // Use theme fill color for empty days
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: hasMood
                             ? [
@@ -704,14 +756,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             date.day == DateTime.now().day &&
                                 date.month == DateTime.now().month &&
                                 date.year == DateTime.now().year
-                            ? Border.all(color: AppColors.pastelBlue, width: 2)
+                            ? Border.all(
+                                color: Theme.of(context).colorScheme.primary,
+                                width: 2,
+                              )
                             : null,
                       ),
                       child: Center(
                         child: Text(
                           '$dayNumber',
                           style: TextStyle(
-                            color: hasMood ? Colors.white : AppColors.darkText,
+                            color: hasMood
+                                ? Colors
+                                      .white // Mood cells always white text
+                                : Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color, // Regular day text
                             fontWeight: hasMood
                                 ? FontWeight.bold
                                 : FontWeight.normal,
