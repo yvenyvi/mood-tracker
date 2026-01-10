@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class MoodAssets {
   static const String _baseUrl =
       'https://fonts.gstatic.com/s/e/notoemoji/latest';
@@ -45,5 +47,34 @@ class MoodAssets {
           orElse: () => const MapEntry(3, 'Okay'),
         )
         .key;
+  }
+
+  static const Map<String, Color> _moodColors = {
+    'Happy': Colors.amber,
+    'Sad': Color(0xFF42A5F5), // Blue 400
+    'Neutral': Colors.grey,
+    'Bad': Color(0xFF42A5F5), // Blue 400 (Legacy)
+    'Okay': Colors.grey, // (Legacy)
+    'Angry': Color(0xFFEF5350), // Red 400
+    'Terrible': Color(0xFFEF5350), // Red 400 (Legacy)
+    'Anxious': Color(0xFFAB47BC), // Purple 400
+    'Stress': Color(0xFFFF7043), // Orange 400
+    'Excited': Color(0xFF26A69A), // Teal 400
+    'Great': Color(0xFF26A69A), // Teal 400 (Legacy)
+    'Tired': Color(0xFF78909C), // Blue Grey 400
+  };
+
+  static Color getMoodColor(String category) {
+    // Try direction match first, then case-insensitive
+    if (_moodColors.containsKey(category)) {
+      return _moodColors[category]!;
+    }
+
+    // Capitalize first letter to match keys just in case
+    final capitalized = category.isNotEmpty
+        ? '${category[0].toUpperCase()}${category.substring(1).toLowerCase()}'
+        : category;
+
+    return _moodColors[capitalized] ?? Colors.grey;
   }
 }

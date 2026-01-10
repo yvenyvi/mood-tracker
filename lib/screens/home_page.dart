@@ -281,16 +281,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       children: [
         Text(
           isAnonymous ? 'Hello, Friend' : '$greeting, $displayName',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkText,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'How are you feeling today?',
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
         ),
       ],
     );
@@ -488,9 +491,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     'Most Common',
                     mostCommonMood,
                     widgetIcon: Lottie.network(
-                      MoodAssets.getUrl(
-                        MoodAssets.getIntensity(mostCommonMood),
-                      ),
+                      MoodAssets.getCategoryUrl(mostCommonMood),
                       width: 40,
                       height: 40,
                       animate: true,
@@ -531,7 +532,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.darkText,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -540,7 +541,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -555,10 +559,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       children: [
         Text(
           DateFormat('MMMM yyyy').format(_selectedMonth),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: AppColors.darkText,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         Row(
@@ -709,7 +713,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 );
                 final hasMood = moodData.containsKey(date);
                 final moodColor = hasMood
-                    ? _getMoodColor(moodData[date]!.first['mood'] ?? 'neutral')
+                    ? MoodAssets.getMoodColor(
+                        moodData[date]!.first['mood'] ?? 'neutral',
+                      )
                     : null;
 
                 final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -788,28 +794,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         }),
       ],
     );
-  }
-
-  Color _getMoodColor(String? mood) {
-    switch ((mood ?? 'neutral').toLowerCase()) {
-      case 'happy':
-      case 'good':
-        return Colors.amber; // Darker Yellow/Amber
-      case 'sad':
-      case 'bad':
-        return const Color(0xFF42A5F5); // Blue 400
-      case 'angry':
-      case 'terrible':
-        return const Color(0xFFEF5350); // Red 400
-      case 'anxious':
-        return const Color(0xFFAB47BC); // Purple 400
-      case 'great':
-        return const Color(0xFF26A69A); // Teal 400
-      case 'netural':
-      case 'okay':
-      default:
-        return Colors.grey;
-    }
   }
 
   void _showMoodDetails(
