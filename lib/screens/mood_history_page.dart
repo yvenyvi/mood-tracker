@@ -103,7 +103,7 @@ class MoodHistoryPage extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               color: Theme.of(
                                 context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
+                              ).colorScheme.onSurface.withValues(alpha: 0.6),
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -114,7 +114,7 @@ class MoodHistoryPage extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.onSurface.withOpacity(0.1),
+                              ).colorScheme.onSurface.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -145,11 +145,13 @@ class MoodHistoryPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(18),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: color.withOpacity(isDark ? 0.15 : 0.08),
+                            color: color.withValues(
+                              alpha: isDark ? 0.15 : 0.08,
+                            ),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: color.withOpacity(
-                                isDark ? 0.3 : 0.5,
+                              color: color.withValues(
+                                alpha: isDark ? 0.3 : 0.5,
                               ), // Darker border for light mode
                               width: 1,
                             ),
@@ -163,7 +165,7 @@ class MoodHistoryPage extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: color.withOpacity(0.2),
+                                      color: color.withValues(alpha: 0.2),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Lottie.network(
@@ -208,7 +210,7 @@ class MoodHistoryPage extends StatelessWidget {
                                   ),
                                   Icon(
                                     Icons.chevron_right,
-                                    color: color.withOpacity(0.5),
+                                    color: color.withValues(alpha: 0.5),
                                     size: 20,
                                   ),
                                 ],
@@ -222,9 +224,10 @@ class MoodHistoryPage extends StatelessWidget {
                                     Icon(
                                       Icons.bolt_rounded,
                                       size: 14,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface.withOpacity(0.6),
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
                                     ),
                                     const SizedBox(width: 6),
                                     Expanded(
@@ -237,7 +240,7 @@ class MoodHistoryPage extends StatelessWidget {
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface
-                                              .withOpacity(0.7),
+                                              .withValues(alpha: 0.7),
                                         ),
                                       ),
                                     ),
@@ -262,7 +265,7 @@ class MoodHistoryPage extends StatelessWidget {
                                           decoration: BoxDecoration(
                                             color: Theme.of(context)
                                                 .scaffoldBackgroundColor
-                                                .withOpacity(0.6),
+                                                .withValues(alpha: 0.6),
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
@@ -274,7 +277,7 @@ class MoodHistoryPage extends StatelessWidget {
                                               color: Theme.of(context)
                                                   .colorScheme
                                                   .onSurface
-                                                  .withOpacity(0.8),
+                                                  .withValues(alpha: 0.8),
                                             ),
                                           ),
                                         );

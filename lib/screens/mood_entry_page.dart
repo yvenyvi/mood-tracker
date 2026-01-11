@@ -170,9 +170,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                                   return Icon(
                                     Icons.error,
                                     size: isSelected ? 48 : 40,
-                                    color: Theme.of(
-                                      context,
-                                    ).unselectedWidgetColor,
+                                    color: Colors.grey,
                                   );
                                 },
                               ),
@@ -235,7 +233,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                   backgroundColor: Theme.of(
                     context,
                   ).inputDecorationTheme.fillColor,
-                  selectedColor: currentColor.withOpacity(isDark ? 0.4 : 0.2),
+                  selectedColor: currentColor.withValues(
+                    alpha: isDark ? 0.4 : 0.2,
+                  ),
                   checkmarkColor: isSelected
                       ? (isDark ? Colors.white : currentColor)
                       : null,
@@ -391,6 +391,13 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               .orderBy('created_at', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text(
+                'Error loading items: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+              );
+            }
+
             if (!snapshot.hasData) {
               return const SizedBox(
                 height: 20,
@@ -435,7 +442,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                   backgroundColor: Theme.of(
                     context,
                   ).inputDecorationTheme.fillColor,
-                  selectedColor: primaryColor.withOpacity(isDark ? 0.4 : 0.2),
+                  selectedColor: primaryColor.withValues(
+                    alpha: isDark ? 0.4 : 0.2,
+                  ),
                   checkmarkColor: isSelected
                       ? (isDark ? Colors.white : primaryColor)
                       : null,

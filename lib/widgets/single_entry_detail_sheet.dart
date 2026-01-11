@@ -68,7 +68,7 @@ class SingleEntryDetailSheet extends StatelessWidget {
                 (intensity == 0 ? 'Unsure' : 'Unknown'),
             style: TextStyle(
               fontSize: 16,
-              color: color.withOpacity(0.8),
+              color: color.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
@@ -102,8 +102,8 @@ class SingleEntryDetailSheet extends StatelessWidget {
                 children: (entry['emotions'] as List).map<Widget>((e) {
                   return Chip(
                     label: Text(e.toString()),
-                    backgroundColor: color.withOpacity(0.1),
-                    side: BorderSide(color: color.withOpacity(0.3)),
+                    backgroundColor: color.withValues(alpha: 0.1),
+                    side: BorderSide(color: color.withValues(alpha: 0.3)),
                   );
                 }).toList(),
               ),
@@ -124,7 +124,7 @@ class SingleEntryDetailSheet extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
-                  ).colorScheme.surfaceVariant.withOpacity(0.3),
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

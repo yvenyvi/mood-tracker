@@ -315,8 +315,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary.withOpacity(0.3),
-            Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -374,7 +374,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Theme.of(context).shadowColor.withOpacity(0.05),
+                  color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -447,7 +447,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).shadowColor.withOpacity(0.05),
+                color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -522,7 +522,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -787,7 +787,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         boxShadow: hasMood
                             ? [
                                 BoxShadow(
-                                  color: moodColor!.withOpacity(0.4),
+                                  color: moodColor!.withValues(alpha: 0.4),
                                   blurRadius: 6,
                                   offset: const Offset(0, 3),
                                 ),

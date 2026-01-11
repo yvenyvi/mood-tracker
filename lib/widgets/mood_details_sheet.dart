@@ -81,7 +81,7 @@ class MoodDetailsSheet extends StatelessWidget {
                   color: Theme.of(context).cardColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: color.withOpacity(0.3)),
+                    side: BorderSide(color: color.withValues(alpha: 0.3)),
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
@@ -129,7 +129,7 @@ class MoodDetailsSheet extends StatelessWidget {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: color.withOpacity(0.2),
+                                        color: color.withValues(alpha: 0.2),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -149,9 +149,10 @@ class MoodDetailsSheet extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface.withOpacity(0.7),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.7),
                                     fontSize: 13,
                                   ),
                                 ),
