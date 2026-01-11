@@ -11,6 +11,8 @@ import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:provider/provider.dart';
 import 'package:mood_tracker/services/auth_service.dart';
+import 'package:mood_tracker/screens/mood_history_page.dart';
+import 'package:mood_tracker/widgets/mood_details_sheet.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -591,6 +593,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
           ],
         ),
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    MoodHistoryPage(selectedMonth: _selectedMonth),
+              ),
+            );
+          },
+          child: const Text('See All'),
+        ),
       ],
     );
   }
@@ -730,18 +744,39 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         gradient: hasMood
-                            ? RadialGradient(
-                                center: const Alignment(-0.5, -0.5),
-                                radius: 1.2,
-                                colors: [
-                                  Color.lerp(
-                                    moodColor,
-                                    isDark ? Colors.black : Colors.white,
-                                    0.4, // Reduced lerp intensity for dark mode to optimize visibility
-                                  )!, // Highlight
-                                  moodColor!,
-                                ],
-                              )
+                            ? (moodData[date]!.first['mood'] == 'I Don\'t Know'
+                                  ? const RadialGradient(
+                                      center: Alignment(-0.5, -0.5),
+                                      radius: 1.4,
+                                      colors: [
+                                        Color.fromARGB(
+                                          255,
+                                          147,
+                                          8,
+                                          172,
+                                        ), // Purple
+                                        Color.fromARGB(255, 5, 84, 148), // Blue
+                                        Color.fromARGB(255, 1, 46, 41), // Teal
+                                        Color.fromARGB(
+                                          255,
+                                          160,
+                                          60,
+                                          29,
+                                        ), // Orange
+                                      ],
+                                    )
+                                  : RadialGradient(
+                                      center: const Alignment(-0.5, -0.5),
+                                      radius: 1.2,
+                                      colors: [
+                                        Color.lerp(
+                                          moodColor,
+                                          isDark ? Colors.black : Colors.white,
+                                          0.4,
+                                        )!, // Highlight
+                                        moodColor!,
+                                      ],
+                                    ))
                             : null,
                         color: hasMood
                             ? null
@@ -806,108 +841,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        final firstTimestamp = (entries.first['timestamp'] as Timestamp)
-            .toDate()
-            .toLocal();
-
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
-          ),
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                DateFormat('EEEE, MMMM d, yyyy').format(firstTimestamp),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: entries.length,
-                  separatorBuilder: (context, index) => const Divider(),
-                  itemBuilder: (context, index) {
-                    final moodData = entries[index];
-                    final timestamp = (moodData['timestamp'] as Timestamp)
-                        .toDate()
-                        .toLocal();
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          DateFormat('h:mm a').format(timestamp),
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Text(
-                              'Mood: ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Lottie.network(
-                              MoodAssets.getUrl(
-                                MoodAssets.getIntensity(
-                                  moodData['mood'] ?? 'neutral',
-                                ),
-                              ),
-                              width: 30,
-                              height: 30,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(moodData['mood'] ?? 'Unknown'),
-                          ],
-                        ),
-                        if (moodData['intensity'] != null) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Text(
-                                'Intensity: ',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text('${moodData['intensity']}/5'),
-                            ],
-                          ),
-                        ],
-                        if (moodData['note'] != null &&
-                            (moodData['note'] as String).isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Notes:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(moodData['note']),
-                        ] else if (moodData['rant'] != null &&
-                            (moodData['rant'] as String).isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Notes:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(moodData['rant']),
-                        ],
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context) => MoodDetailsSheet(entries: entries),
     );
   }
 }
