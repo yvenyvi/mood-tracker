@@ -26,7 +26,10 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   String _selectedMood = 'Neutral'; // Default category
   String _currentPrompt = '';
   bool _isSaving = false;
+
   final Set<String> _selectedEmotions = {};
+  final Set<String> _selectedCopingStrategies = {};
+  final Set<String> _selectedSymptoms = {};
 
   // Map categories to approximate intensity (1-5) for backward compatibility/analytics
 
@@ -60,7 +63,10 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             'mood': _selectedMood,
             'note': _noteController.text.trim(),
             'trigger': _triggerController.text.trim(),
+
             'emotions': _selectedEmotions.toList(),
+            'coping_strategies': _selectedCopingStrategies.toList(),
+            'physical_symptoms': _selectedSymptoms.toList(),
             'timestamp': DateTime.now(),
           });
 
@@ -73,7 +79,10 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
         setState(() {
           _selectedMood = 'Neutral';
           _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
+
           _selectedEmotions.clear();
+          _selectedCopingStrategies.clear();
+          _selectedSymptoms.clear();
         });
       }
     } catch (e) {
@@ -298,6 +307,28 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
             const SizedBox(height: 32),
 
+            // Coping Strategies Section
+            _buildSelectionSection(
+              context,
+              user?.uid,
+              'coping_strategies',
+              'Did anything help? (Safety Menu)',
+              _selectedCopingStrategies,
+            ),
+
+            const SizedBox(height: 32),
+
+            // Physical Symptoms Section
+            _buildSelectionSection(
+              context,
+              user?.uid,
+              'physical_symptoms',
+              'Physical Symptoms',
+              _selectedSymptoms,
+            ),
+
+            const SizedBox(height: 32),
+
             // Save Button
             ElevatedButton(
               onPressed: _isSaving ? null : _saveMood,
@@ -327,6 +358,107 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSelectionSection(
+    BuildContext context,
+    String? userId,
+    String collection,
+    String title,
+    Set<String> selectedSet,
+  ) {
+    if (userId == null) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = MoodAssets.getMoodColor(_selectedMood);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection(collection)
+              .orderBy('created_at', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const SizedBox(
+                height: 20,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            }
+
+            final docs = snapshot.data!.docs;
+            if (docs.isEmpty) {
+              return Text(
+                'No items found. Add them in your Profile.',
+                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              );
+            }
+
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final name = data['name'] as String? ?? '';
+                final isSelected = selectedSet.contains(name);
+
+                return FilterChip(
+                  label: Text(name),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        selectedSet.add(name);
+                      } else {
+                        selectedSet.remove(name);
+                      }
+                    });
+                  },
+                  backgroundColor: Theme.of(
+                    context,
+                  ).inputDecorationTheme.fillColor,
+                  selectedColor: primaryColor.withOpacity(isDark ? 0.4 : 0.2),
+                  checkmarkColor: isSelected
+                      ? (isDark ? Colors.white : primaryColor)
+                      : null,
+                  labelStyle: TextStyle(
+                    color: isSelected
+                        ? (isDark ? Colors.white : primaryColor)
+                        : Theme.of(context).textTheme.bodyLarge?.color,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                  side: isSelected
+                      ? BorderSide(color: primaryColor)
+                      : BorderSide.none,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 }
