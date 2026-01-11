@@ -7,9 +7,9 @@ import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:mood_tracker/widgets/mood_details_sheet.dart';
 
 class MoodHistoryPage extends StatelessWidget {
-  final DateTime selectedMonth;
+  final DateTime? selectedMonth;
 
-  const MoodHistoryPage({super.key, required this.selectedMonth});
+  const MoodHistoryPage({super.key, this.selectedMonth});
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +18,13 @@ class MoodHistoryPage extends StatelessWidget {
       return const Scaffold(body: Center(child: Text("Not logged in")));
     }
 
-    final startOfMonth = DateTime(selectedMonth.year, selectedMonth.month, 1);
-    final nextMonth = DateTime(selectedMonth.year, selectedMonth.month + 1, 1);
+    final targetDate = selectedMonth ?? DateTime.now();
+    final startOfMonth = DateTime(targetDate.year, targetDate.month, 1);
+    final nextMonth = DateTime(targetDate.year, targetDate.month + 1, 1);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(DateFormat('MMMM yyyy').format(selectedMonth)),
+        title: Text(DateFormat('MMMM yyyy').format(targetDate)),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

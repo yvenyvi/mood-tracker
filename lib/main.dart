@@ -1,4 +1,3 @@
-import 'package:mood_tracker/screens/home_page.dart';
 import 'package:mood_tracker/screens/login_page.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/theme/app_theme.dart';
@@ -7,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:mood_tracker/screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,7 +59,7 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           final user = snapshot.data;
-          return user == null ? const LoginPage() : const HomePage();
+          return user == null ? const LoginPage() : const MainScreen();
         }
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
