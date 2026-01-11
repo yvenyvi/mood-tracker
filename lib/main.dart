@@ -41,7 +41,7 @@ class EmoteApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-          home: const AuthWrapper(),
+          home: AuthWrapper(),
         );
       },
     );
@@ -59,7 +59,7 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           final user = snapshot.data;
-          return user == null ? const LoginPage() : const MainScreen();
+          return user == null ? const LoginPage() : MainScreen();
         }
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },

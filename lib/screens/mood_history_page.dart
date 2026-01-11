@@ -93,9 +93,7 @@ class MoodHistoryPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
-                              color: isDark
-                                  ? Colors.white
-                                  : Colors.black, // High contrast
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           Text(
@@ -103,9 +101,9 @@ class MoodHistoryPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? Colors.white54
-                                  : Colors.black54, // High contrast
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -114,9 +112,9 @@ class MoodHistoryPage extends StatelessWidget {
                             width: 2,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white12
-                                  : Colors.black12, // High contrast
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),

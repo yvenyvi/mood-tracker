@@ -31,7 +31,7 @@ class AppTheme {
 
   static const Color backgroundWhite = Color(0xFFFDFDFD);
   static const Color surfaceWhite = Color(0xFFFFFFFF);
-  static const Color textDark = Color(0xFF4A4A4A);
+  static const Color textDark = Colors.black;
   static const Color textGrey = Color(0xFF8D8D8D);
 
   static ThemeData get lightTheme {
