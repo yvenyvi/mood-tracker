@@ -23,9 +23,7 @@ class MoodHistoryPage extends StatelessWidget {
     final nextMonth = DateTime(targetDate.year, targetDate.month + 1, 1);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(DateFormat('MMMM yyyy').format(targetDate)),
-      ),
+      appBar: AppBar(title: Text(DateFormat('MMMM yyyy').format(targetDate))),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -95,7 +93,9 @@ class MoodHistoryPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
-                              color: Theme.of(context).colorScheme.onSurface,
+                              color: isDark
+                                  ? Colors.white
+                                  : Colors.black, // High contrast
                             ),
                           ),
                           Text(
@@ -103,9 +103,9 @@ class MoodHistoryPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.5),
+                              color: isDark
+                                  ? Colors.white54
+                                  : Colors.black54, // High contrast
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -114,9 +114,9 @@ class MoodHistoryPage extends StatelessWidget {
                             width: 2,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.1),
+                              color: isDark
+                                  ? Colors.white12
+                                  : Colors.black12, // High contrast
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -150,7 +150,9 @@ class MoodHistoryPage extends StatelessWidget {
                             color: color.withOpacity(isDark ? 0.15 : 0.08),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: color.withOpacity(isDark ? 0.3 : 0.2),
+                              color: color.withOpacity(
+                                isDark ? 0.3 : 0.5,
+                              ), // Darker border for light mode
                               width: 1,
                             ),
                           ),

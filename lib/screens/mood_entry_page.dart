@@ -226,7 +226,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                   backgroundColor: Theme.of(
                     context,
                   ).inputDecorationTheme.fillColor,
-                  selectedColor: currentColor.withAlpha(isDark ? 100 : 50),
+                  selectedColor: currentColor.withOpacity(isDark ? 0.4 : 0.2),
                   checkmarkColor: isSelected
                       ? (isDark ? Colors.white : currentColor)
                       : null,
@@ -260,9 +260,14 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             const SizedBox(height: 8),
             TextField(
               controller: _triggerController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'e.g., Work deadline, Argument with friend...',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
               ),
             ),
 
@@ -279,9 +284,14 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             const SizedBox(height: 8),
             TextField(
               controller: _noteController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Write your thoughts here...',
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
               ),
               maxLines: 4,
             ),
@@ -300,9 +310,18 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               ),
               child: _isSaving
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
+                  : Text(
                       'Save Entry',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 18,
+                        color:
+                            ThemeData.estimateBrightnessForColor(
+                                  currentColor,
+                                ) ==
+                                Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
+                      ),
                     ),
             ),
           ],

@@ -65,6 +65,11 @@ class AppTheme {
           ),
           bodyLarge: TextStyle(color: textDark, fontSize: 16),
           bodyMedium: TextStyle(color: textGrey, fontSize: 14),
+          headlineMedium: TextStyle(
+            color: textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
         ),
       ),
 
@@ -82,7 +87,9 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: Color.fromRGBO(158, 158, 158, 0.1)),
+          borderSide: BorderSide(
+            color: Color.fromRGBO(158, 158, 158, 0.4),
+          ), // Increased visibility
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
@@ -102,6 +109,14 @@ class AppTheme {
             borderRadius: BorderRadius.circular(30),
           ),
           textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+      ),
+
+      // TextButton Theme (For "See All" etc.)
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: skyBlue, // Darker blue for visibility on light bg
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -161,6 +176,11 @@ class AppTheme {
           ),
           bodyLarge: TextStyle(color: Colors.white, fontSize: 16),
           bodyMedium: TextStyle(color: Colors.white70, fontSize: 14),
+          headlineMedium: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
         ),
       ),
 
@@ -198,6 +218,14 @@ class AppTheme {
             borderRadius: BorderRadius.circular(30),
           ),
           textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+      ),
+
+      // TextButton Theme
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: lightSkyBlue, // Lighter blue for dark bg
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
 
