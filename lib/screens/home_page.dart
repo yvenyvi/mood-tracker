@@ -11,7 +11,6 @@ import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:provider/provider.dart';
 import 'package:mood_tracker/services/auth_service.dart';
-import 'package:mood_tracker/screens/settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
