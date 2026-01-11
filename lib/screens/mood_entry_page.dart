@@ -16,7 +16,15 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   final _noteController = TextEditingController();
   final _triggerController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize prompt
+    _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
+  }
+
   String _selectedMood = 'Neutral'; // Default category
+  String _currentPrompt = '';
   bool _isSaving = false;
   final Set<String> _selectedEmotions = {};
 
@@ -64,6 +72,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
         _triggerController.clear();
         setState(() {
           _selectedMood = 'Neutral';
+          _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
           _selectedEmotions.clear();
         });
       }
@@ -117,6 +126,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                   onTap: () {
                     setState(() {
                       _selectedMood = mood;
+                      _currentPrompt = MoodAssets.getAdaptivePrompt(mood);
                       _selectedEmotions
                           .clear(); // Clear specific emotions when category changes
                     });
@@ -259,12 +269,19 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             const SizedBox(height: 32),
 
             // Note Input
+            // Note Input (Adaptive Prompt)
+            Text(
+              _currentPrompt,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _noteController,
               decoration: const InputDecoration(
-                labelText: 'Add a note (optional)',
+                hintText: 'Write your thoughts here...',
                 border: OutlineInputBorder(),
-                alignLabelWithHint: true,
               ),
               maxLines: 4,
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 class MoodAssets {
   static const String _baseUrl =
@@ -22,6 +23,7 @@ class MoodAssets {
     'Stress': '$_baseUrl/1f92f/lottie.json', // Exploding Head
     'Excited': '$_baseUrl/1f929/lottie.json', // Star-Struck
     'Tired': '$_baseUrl/1f634/lottie.json', // Sleeping Face
+    'I Don\'t Know': '$_baseUrl/1f914/lottie.json', // Thinking Face
   };
 
   static const Map<int, String> moodLabels = {
@@ -59,6 +61,8 @@ class MoodAssets {
       case 'Bad': // Legacy
       case 'Terrible': // Legacy
         return 1;
+      case 'I Don\'t Know':
+        return 0; // Distinct intensity for "Delayed Understanding"
       default:
         return 3;
     }
@@ -73,6 +77,7 @@ class MoodAssets {
     'Stress',
     'Excited',
     'Tired',
+    'I Don\'t Know',
   ];
 
   static const Map<String, List<String>> emotions = {
@@ -88,6 +93,7 @@ class MoodAssets {
       'Mental exhaustion',
       'Physical exhaustion',
     ],
+    'I Don\'t Know': [], // No specific emotions for this state
   };
 
   static const Map<String, Color> _moodColors = {
@@ -103,6 +109,7 @@ class MoodAssets {
     'Excited': Color(0xFF26A69A), // Teal 400
     'Great': Color(0xFF26A69A), // Teal 400 (Legacy)
     'Tired': Color(0xFF78909C), // Blue Grey 400
+    'I Don\'t Know': Color(0xFF5C6BC0), // Indigo 400
   };
 
   static Color getMoodColor(String category) {
@@ -117,5 +124,77 @@ class MoodAssets {
         : category;
 
     return _moodColors[capitalized] ?? Colors.grey;
+  }
+
+  static String getAdaptivePrompt(String mood) {
+    final random = Random();
+    List<String> prompts;
+
+    switch (mood) {
+      case 'Happy':
+      case 'Excited':
+      case 'Great':
+        prompts = [
+          "What went well today?",
+          "What made you smile recently?",
+          "Who are you grateful for right now?",
+        ];
+        break;
+      case 'Sad':
+      case 'Bad':
+        prompts = [
+          "What's weighing on your mind?",
+          "How can you be gentle with yourself today?",
+          "What do you need most right now?",
+        ];
+        break;
+      case 'Angry':
+      case 'Frustrated':
+        prompts = [
+          "What made you feel this way?",
+          "How does this anger feel in your body?",
+          "What boundary was crossed?",
+        ];
+        break;
+      case 'Anxious':
+      case 'Worry':
+        prompts = [
+          "What would you tell a friend who felt this way?",
+          "What is one small thing you can control?",
+          "What evidence do you have against this fear?",
+        ];
+        break;
+      case 'Stress':
+        prompts = [
+          "What can you do to be kind to yourself right now?",
+          "What can you delegate or let go of?",
+          "Take a deep breath. What's the next small step?",
+        ];
+        break;
+      case 'Tired':
+        prompts = [
+          "What is draining your energy?",
+          "How can you prioritize rest today?",
+          "What does your body need right now?",
+        ];
+        break;
+      case 'I Don\'t Know':
+        prompts = [
+          "Whatever you're feeling is valid. Be patient with yourself.",
+          "Describe your physical sensations if you can't name the emotion.",
+          "It's okay not to know. Just be here.",
+        ];
+        break;
+      case 'Neutral':
+      default:
+        prompts = [
+          "What's on your mind?",
+          "How was your day so far?",
+          "Anything you want to get off your chest?",
+        ];
+        break;
+    }
+
+    return prompts[random.nextInt(prompts.length)];
   }
 }
