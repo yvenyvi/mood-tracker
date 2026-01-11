@@ -30,35 +30,51 @@ class ProfilePage extends StatelessWidget {
         body: Column(
           children: [
             // User Header
-            Container(
-              padding: const EdgeInsets.all(24),
-              color: theme.colorScheme.secondary.withAlpha(50),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: theme.colorScheme.primary,
-                    child: Text(
-                      (user.displayName ?? 'U')[0].toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // User Header
+            Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  color: theme.colorScheme.secondary.withAlpha(50),
+                  child: Row(
                     children: [
-                      Text(
-                        user.displayName ?? 'Friend',
-                        style: theme.textTheme.titleLarge,
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: theme.colorScheme.primary,
+                        child: Text(
+                          (user.displayName ?? 'U')[0].toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
                       ),
-                      Text(user.email ?? '', style: theme.textTheme.bodyMedium),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.displayName ?? 'Friend',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          Text(
+                            user.email ?? '',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                Positioned(
+                  right: 16,
+                  top: 16,
+                  child: IconButton(
+                    icon: Icon(Icons.edit, color: theme.colorScheme.primary),
+                    onPressed: () => _showEditProfileDialog(context, user),
+                  ),
+                ),
+              ],
             ),
 
             // Tab Content
@@ -262,5 +278,52 @@ class ProfilePage extends StatelessWidget {
         .collection(collection)
         .doc(docId)
         .delete();
+  }
+
+  Future<void> _showEditProfileDialog(
+    BuildContext context,
+    dynamic user,
+  ) async {
+    final controller = TextEditingController(text: user.displayName);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile Name'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Enter your name'),
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                try {
+                  await Provider.of<AuthService>(
+                    context,
+                    listen: false,
+                  ).updateDisplayName(newName);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.toString())));
+                  }
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 }
