@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:mood_tracker/theme/app_theme.dart';
 import 'package:mood_tracker/utils/daily_messages.dart';
 import 'package:mood_tracker/screens/mood_entry_page.dart';
+import 'package:mood_tracker/screens/profile_page.dart';
+import 'package:mood_tracker/screens/settings_page.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:provider/provider.dart';
@@ -191,9 +193,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
             onTap: () {
               Navigator.pop(context); // Close drawer
-              // TODO: Navigate to Profile
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile coming soon!')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
               );
             },
           ),
