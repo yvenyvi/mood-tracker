@@ -83,6 +83,27 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  // Update Display Name
+  Future<void> updateDisplayName(String newName) async {
+    try {
+      if (_user != null) {
+        await _user!.updateDisplayName(newName);
+        await _firestore.collection('users').doc(_user!.uid).update({
+          'displayName': newName,
+        });
+
+        // Force refresh user to update UI
+        await _user!.reload();
+        _user = _auth.currentUser;
+        notifyListeners();
+      }
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'An error occurred while updating profile.';
+    }
+  }
+
   // Sign Out
   Future<void> signOut() async {
     await _auth.signOut();
