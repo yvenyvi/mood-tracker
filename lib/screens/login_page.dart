@@ -222,6 +222,41 @@ class _LoginPageState extends State<LoginPage> {
                 ElevatedButton(onPressed: _login, child: const Text('Login')),
                 const SizedBox(height: 16),
 
+                // Google Sign In Button
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    try {
+                      setState(() {
+                        _isLoading = true;
+                        _errorMessage = null;
+                      });
+                      await Provider.of<AuthService>(
+                        context,
+                        listen: false,
+                      ).signInWithGoogle();
+                    } catch (e) {
+                      setState(() {
+                        _errorMessage = e.toString();
+                      });
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
+                    }
+                  },
+                  icon: Image.asset(
+                    'assets/images/google_logo.png', // Assuming you might have one, or use a default Icon
+                    height: 24,
+                    width: 24,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.login, size: 24),
+                  ), // Fallback icon
+                  label: const Text('Sign in with Google'),
+                ),
+                const SizedBox(height: 16),
+
                 // Register Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

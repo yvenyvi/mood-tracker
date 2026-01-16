@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   User? _user;
   User? get user => _user;
@@ -83,6 +85,46 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  // Sign In with Google
+  Future<User?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null; // User canceled the sign-in
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential result = await _auth.signInWithCredential(credential);
+      User? user = result.user;
+
+      if (user != null) {
+        // Check if user doc exists, if not create it
+        final userDoc = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (!userDoc.exists) {
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'displayName': user.displayName ?? 'Google User',
+            'email': user.email,
+            'copingLibrary': [],
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      return user;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'An error occurred during Google Sign-In.';
+    }
+  }
+
   // Update Display Name
   Future<void> updateDisplayName(String newName) async {
     try {
@@ -106,6 +148,7 @@ class AuthService with ChangeNotifier {
 
   // Sign Out
   Future<void> signOut() async {
+    await _googleSignIn.signOut();
     await _auth.signOut();
   }
 
