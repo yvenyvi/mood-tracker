@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
-import 'package:intl/intl.dart';
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:lottie/lottie.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -55,7 +55,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               : now.subtract(const Duration(days: 30));
 
           final filteredEntries = allEntries.where((e) {
-            final ts = (e['timestamp'] as Timestamp).toDate();
+            final ts = AppDateUtils.getDateTime(e['timestamp']);
             return ts.isAfter(cutoffDate);
           }).toList();
 
@@ -331,7 +331,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     int streak = 0;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final newestEntryTime = (entries.first['timestamp'] as Timestamp).toDate();
+    final newestEntryTime = AppDateUtils.getDateTime(
+      entries.first['timestamp'],
+    );
     final newestEntryDate = DateTime(
       newestEntryTime.year,
       newestEntryTime.month,
@@ -350,8 +352,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
     Set<String> uniqueDays = {};
     for (var entry in entries) {
-      final ts = (entry['timestamp'] as Timestamp).toDate();
-      final dateKey = DateFormat('yyyy-MM-dd').format(ts);
+      final ts = AppDateUtils.getDateTime(entry['timestamp']);
+      final dateKey = AppDateUtils.formatIsoDate(ts);
       if (!uniqueDays.contains(dateKey)) {
         uniqueDays.add(dateKey);
         final date = DateTime(ts.year, ts.month, ts.day);
@@ -583,7 +585,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        DateFormat('E').format(date)[0],
+                        AppDateUtils.formatShortWeekday(date)[0],
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     );
@@ -633,10 +635,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
     for (int i = 6; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
-      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final dateStr = AppDateUtils.formatIsoDate(date);
       final dayEntries = entries.where((e) {
-        final ts = (e['timestamp'] as Timestamp).toDate();
-        return DateFormat('yyyy-MM-dd').format(ts) == dateStr;
+        final ts = AppDateUtils.getDateTime(e['timestamp']);
+        return AppDateUtils.formatIsoDate(ts) == dateStr;
       }).toList();
 
       if (dayEntries.isNotEmpty) {
@@ -658,7 +660,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       final start = end.subtract(const Duration(days: 6));
 
       final weekEntries = entries.where((e) {
-        final ts = (e['timestamp'] as Timestamp).toDate();
+        final ts = AppDateUtils.getDateTime(e['timestamp']);
         final d = DateTime(ts.year, ts.month, ts.day);
         final s = DateTime(start.year, start.month, start.day);
         final en = DateTime(end.year, end.month, end.day);

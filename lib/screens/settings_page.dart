@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mood_tracker/providers/theme_provider.dart';
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -121,11 +122,10 @@ class SettingsPage extends StatelessWidget {
       final data = querySnapshot.docs.map((doc) {
         final docData = doc.data();
         // Convert Timestamp to ISO8601 String for JSON
-        if (docData['timestamp'] is Timestamp) {
-          docData['timestamp'] = (docData['timestamp'] as Timestamp)
-              .toDate()
-              .toIso8601String();
-        }
+        // Convert Timestamp to ISO8601 String for JSON
+        docData['timestamp'] = AppDateUtils.getDateTime(
+          docData['timestamp'],
+        ).toIso8601String();
         return docData;
       }).toList();
 

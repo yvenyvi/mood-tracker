@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:mood_tracker/theme/app_theme.dart';
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/utils/daily_messages.dart';
 import 'package:mood_tracker/screens/mood_entry_page.dart';
 import 'package:mood_tracker/screens/profile_page.dart';
@@ -671,7 +671,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          DateFormat('MMMM yyyy').format(_selectedMonth),
+          AppDateUtils.formatMonthYear(_selectedMonth),
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -749,9 +749,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         if (snapshot.hasData) {
           for (var doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
-            final timestamp = (data['timestamp'] as Timestamp)
-                .toDate()
-                .toLocal();
+            final timestamp = AppDateUtils.getDateTime(data['timestamp']);
             final date = DateTime(
               timestamp.year,
               timestamp.month,
@@ -767,8 +765,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           // Sort entries by time for each day (latest first)
           for (var entries in moodData.values) {
             entries.sort((a, b) {
-              final tA = (a['timestamp'] as Timestamp).toDate();
-              final tB = (b['timestamp'] as Timestamp).toDate();
+              final tA = AppDateUtils.getDateTime(a['timestamp']);
+              final tB = AppDateUtils.getDateTime(b['timestamp']);
               return tB.compareTo(tA);
             });
           }

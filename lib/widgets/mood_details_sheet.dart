@@ -1,24 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
-
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/widgets/single_entry_detail_sheet.dart';
 
 class MoodDetailsSheet extends StatelessWidget {
   final List<Map<String, dynamic>> entries;
 
   const MoodDetailsSheet({super.key, required this.entries});
-
-  DateTime _getDateTime(dynamic timestamp) {
-    if (timestamp is Timestamp) {
-      return timestamp.toDate().toLocal();
-    } else if (timestamp is DateTime) {
-      return timestamp.toLocal();
-    }
-    return DateTime.now();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +19,7 @@ class MoodDetailsSheet extends StatelessWidget {
       );
     }
 
-    final firstTimestamp = _getDateTime(entries.first['timestamp']);
+    final firstTimestamp = AppDateUtils.getDateTime(entries.first['timestamp']);
 
     return Container(
       constraints: BoxConstraints(
@@ -45,7 +34,7 @@ class MoodDetailsSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                DateFormat('EEEE, MMMM d, yyyy').format(firstTimestamp),
+                AppDateUtils.formatFullDate(firstTimestamp),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -65,7 +54,9 @@ class MoodDetailsSheet extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final moodData = entries[index];
-                final timestamp = _getDateTime(moodData['timestamp']);
+                final timestamp = AppDateUtils.getDateTime(
+                  moodData['timestamp'],
+                );
                 final mood = moodData['mood'] ?? 'Neutral';
                 final color = MoodAssets.getMoodColor(mood);
 
@@ -121,7 +112,7 @@ class MoodDetailsSheet extends StatelessWidget {
                                 Row(
                                   children: [
                                     Text(
-                                      DateFormat('h:mm a').format(timestamp),
+                                      AppDateUtils.formatTime(timestamp),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,

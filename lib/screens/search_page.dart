@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/widgets/single_entry_detail_sheet.dart';
 
 class SearchPage extends StatefulWidget {
@@ -61,9 +61,7 @@ class _SearchPageState extends State<SearchPage> {
 
       final logs = snapshot.docs.map((doc) {
         final data = doc.data();
-        if (data['timestamp'] is Timestamp) {
-          data['timestamp'] = (data['timestamp'] as Timestamp).toDate();
-        }
+        data['timestamp'] = AppDateUtils.getDateTime(data['timestamp']);
         return data;
       }).toList();
 
@@ -325,11 +323,11 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildEnhancedLogItem(Map<String, dynamic> log) {
     final mood = log['mood'] as String? ?? 'Neutral';
-    final timestamp = log['timestamp'] as DateTime;
+    final timestamp = AppDateUtils.getDateTime(log['timestamp']);
     final note = log['note'] as String? ?? '';
     final moodColor = MoodAssets.getMoodColor(mood);
-    final dateStr = DateFormat('MMM d, yyyy').format(timestamp);
-    final timeStr = DateFormat('h:mm a').format(timestamp);
+    final dateStr = AppDateUtils.formatMediumDate(timestamp);
+    final timeStr = AppDateUtils.formatTime(timestamp);
 
     // Identify matched chips
     List<Widget> matchedChips = [];
