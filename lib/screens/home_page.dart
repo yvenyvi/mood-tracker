@@ -12,6 +12,7 @@ import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:provider/provider.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/screens/mood_history_page.dart';
+import 'package:mood_tracker/screens/search_page.dart';
 import 'package:mood_tracker/widgets/mood_details_sheet.dart';
 
 class HomePage extends StatefulWidget {
@@ -55,7 +56,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
         leadingWidth: 70,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -91,7 +91,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               color: Theme.of(context).colorScheme.onSurface,
             ),
             onPressed: () {
-              // TODO: Implement search functionality
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchPage()),
+              );
             },
           ),
           IconButton(
@@ -202,23 +205,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ),
           ListTile(
             leading: Icon(
-              Icons.analytics_outlined,
-              color: colorScheme.onSurface,
-            ),
-            title: Text(
-              'Analytics',
-              style: TextStyle(color: colorScheme.onSurface),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO: Navigate to Analytics
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Analytics coming soon!')),
-              );
-            },
-          ),
-          ListTile(
-            leading: Icon(
               Icons.settings_outlined,
               color: colorScheme.onSurface,
             ),
@@ -234,6 +220,34 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               );
             },
           ),
+          ListTile(
+            leading: Icon(
+              Icons.emergency_outlined,
+              color: AppTheme.blossomPink, // Use our theme color
+            ),
+            title: Text(
+              'Emergency Support',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              _showEmergencyHotlinesDialog(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.info_outline, color: colorScheme.onSurface),
+            title: Text(
+              'About Emote',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              _showAboutDialog(context);
+            },
+          ),
           const Spacer(),
           Divider(color: Theme.of(context).dividerColor),
           ListTile(
@@ -245,6 +259,103 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             },
           ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  void _showEmergencyHotlinesDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.phone_in_talk, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 8),
+            const Text('Crisis Hotlines'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'You are not alone. Reach out if you need help.',
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 16),
+              _buildHotlineItem(
+                'National Center for Mental Health',
+                '0917-899-USAP (8727)\n988 (Landline)',
+              ),
+              _buildHotlineItem(
+                'In Touch Community Services',
+                '0917-800-1123\n0922-893-8944',
+              ),
+              _buildHotlineItem(
+                'Hopeline Philippines',
+                '2919 (Globe/TM)\n0917-558-4673',
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'Emote',
+      applicationVersion: '1.0.0',
+      applicationIcon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.mood,
+          size: 40,
+          color: Theme.of(context).primaryColor,
+        ),
+      ),
+      children: [
+        const SizedBox(height: 16),
+        const Text(
+          'Emote is a safe space tailored to help you track your emotions, identify triggers, and build resilience.',
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Developed with 🩷 for mental health awareness.',
+          style: TextStyle(fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHotlineItem(String title, String number) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          SelectableText(
+            number,
+            style: TextStyle(
+              color: Theme.of(context).primaryColor,
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+            ),
+          ),
         ],
       ),
     );

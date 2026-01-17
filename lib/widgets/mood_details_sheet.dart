@@ -11,6 +11,15 @@ class MoodDetailsSheet extends StatelessWidget {
 
   const MoodDetailsSheet({super.key, required this.entries});
 
+  DateTime _getDateTime(dynamic timestamp) {
+    if (timestamp is Timestamp) {
+      return timestamp.toDate().toLocal();
+    } else if (timestamp is DateTime) {
+      return timestamp.toLocal();
+    }
+    return DateTime.now();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Safety check for empty entries
@@ -21,9 +30,7 @@ class MoodDetailsSheet extends StatelessWidget {
       );
     }
 
-    final firstTimestamp = (entries.first['timestamp'] as Timestamp)
-        .toDate()
-        .toLocal();
+    final firstTimestamp = _getDateTime(entries.first['timestamp']);
 
     return Container(
       constraints: BoxConstraints(
@@ -58,9 +65,7 @@ class MoodDetailsSheet extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final moodData = entries[index];
-                final timestamp = (moodData['timestamp'] as Timestamp)
-                    .toDate()
-                    .toLocal();
+                final timestamp = _getDateTime(moodData['timestamp']);
                 final mood = moodData['mood'] ?? 'Neutral';
                 final color = MoodAssets.getMoodColor(mood);
 

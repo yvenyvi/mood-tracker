@@ -16,12 +16,14 @@ class ProfilePage extends StatelessWidget {
     }
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Profile & Tools'),
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
+              Tab(icon: Icon(Icons.bolt), text: "Triggers"),
               Tab(icon: Icon(Icons.favorite), text: "Safety Menu"),
               Tab(icon: Icon(Icons.accessibility_new), text: "Body Signals"),
             ],
@@ -81,6 +83,14 @@ class ProfilePage extends StatelessWidget {
             Expanded(
               child: TabBarView(
                 children: [
+                  // Triggers Tab
+                  _buildCrudList(
+                    context,
+                    userId: user.uid,
+                    collection: 'triggers',
+                    title: 'Triggers',
+                    placeholder: 'e.g., Traffic, Deadline, Argument...',
+                  ),
                   // Safety Menu Tab
                   _buildCrudList(
                     context,

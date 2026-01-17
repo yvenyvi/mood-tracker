@@ -9,9 +9,18 @@ class SingleEntryDetailSheet extends StatelessWidget {
 
   const SingleEntryDetailSheet({super.key, required this.entry});
 
+  DateTime _getDateTime(dynamic timestamp) {
+    if (timestamp is Timestamp) {
+      return timestamp.toDate().toLocal();
+    } else if (timestamp is DateTime) {
+      return timestamp.toLocal();
+    }
+    return DateTime.now();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final timestamp = (entry['timestamp'] as Timestamp).toDate().toLocal();
+    final timestamp = _getDateTime(entry['timestamp']);
     final mood = entry['mood'] ?? 'Neutral';
     final intensity = entry['intensity'] as int? ?? 3;
     final color = MoodAssets.getMoodColor(mood);

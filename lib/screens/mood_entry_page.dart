@@ -27,6 +27,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   String _currentPrompt = '';
   bool _isSaving = false;
 
+  final Set<String> _selectedTriggers = {};
   final Set<String> _selectedEmotions = {};
   final Set<String> _selectedCopingStrategies = {};
   final Set<String> _selectedSymptoms = {};
@@ -54,6 +55,43 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     setState(() => _isSaving = true);
 
     try {
+      // 1. Handle Triggers (Merge selected + new typed)
+      final String manualTriggerInput = _triggerController.text.trim();
+      final List<String> allTriggers = List.from(_selectedTriggers);
+
+      if (manualTriggerInput.isNotEmpty) {
+        // Split by comma if user typed multiple
+        final newTriggers = manualTriggerInput
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty);
+
+        for (var t in newTriggers) {
+          // Add to current selection
+          if (!allTriggers.contains(t)) {
+            allTriggers.add(t);
+          }
+
+          // Persist custom trigger for future validation
+          // We do this concurrently without awaiting to speed up UX
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('triggers')
+              .where('name', isEqualTo: t)
+              .get()
+              .then((snapshot) {
+                if (snapshot.docs.isEmpty) {
+                  FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .collection('triggers')
+                      .add({'name': t, 'created_at': DateTime.now()});
+                }
+              });
+        }
+      }
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -62,7 +100,8 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             'intensity': MoodAssets.getIntensity(_selectedMood),
             'mood': _selectedMood,
             'note': _noteController.text.trim(),
-            'trigger': _triggerController.text.trim(),
+            'trigger': allTriggers.join(', '), // Legacy support
+            'triggers': allTriggers, // New list format
 
             'emotions': _selectedEmotions.toList(),
             'coping_strategies': _selectedCopingStrategies.toList(),
@@ -80,6 +119,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           _selectedMood = 'Neutral';
           _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
 
+          _selectedTriggers.clear();
           _selectedEmotions.clear();
           _selectedCopingStrategies.clear();
           _selectedSymptoms.clear();
@@ -259,26 +299,8 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
             const SizedBox(height: 32),
 
-            // Trigger Input
-            Text(
-              'What triggered this?',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _triggerController,
-              decoration: InputDecoration(
-                hintText: 'e.g., Work deadline, Argument with friend...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-              ),
-            ),
+            // Triggers Section (Replaces simple TextField)
+            _buildTriggersSection(context, user?.uid),
 
             const SizedBox(height: 32),
 
@@ -358,6 +380,104 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTriggersSection(BuildContext context, String? userId) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = MoodAssets.getMoodColor(_selectedMood);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'What triggered this?',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        // History Chips
+        if (userId != null)
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .collection('triggers')
+                .orderBy('created_at', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+
+              final docs = snapshot.data!.docs;
+              // Only show recent/most used or all? Let's show all for now but capped if needed
+              if (docs.isEmpty) return const SizedBox.shrink();
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final name = data['name'] as String? ?? '';
+                    final isSelected = _selectedTriggers.contains(name);
+
+                    return FilterChip(
+                      label: Text(name),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedTriggers.add(name);
+                          } else {
+                            _selectedTriggers.remove(name);
+                          }
+                        });
+                      },
+                      backgroundColor: Theme.of(
+                        context,
+                      ).inputDecorationTheme.fillColor,
+                      selectedColor: primaryColor.withValues(
+                        alpha: isDark ? 0.4 : 0.2,
+                      ),
+                      checkmarkColor: isSelected
+                          ? (isDark ? Colors.white : primaryColor)
+                          : null,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? (isDark ? Colors.white : primaryColor)
+                            : Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      side: isSelected
+                          ? BorderSide(color: primaryColor)
+                          : BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+
+        TextField(
+          controller: _triggerController,
+          decoration: InputDecoration(
+            hintText: 'Add new trigger (e.g. Traffic, News)...',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+          ),
+        ),
+      ],
     );
   }
 

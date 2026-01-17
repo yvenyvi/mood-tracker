@@ -215,38 +215,57 @@ class MoodHistoryPage extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              if (mainEntry['trigger'] != null &&
-                                  (mainEntry['trigger'] as String)
-                                      .isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.bolt_rounded,
-                                      size: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        mainEntry['trigger'],
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 13,
+                              Builder(
+                                builder: (context) {
+                                  String triggerText = '';
+                                  if (mainEntry['triggers'] != null &&
+                                      (mainEntry['triggers'] as List)
+                                          .isNotEmpty) {
+                                    triggerText =
+                                        (mainEntry['triggers'] as List).join(
+                                          ', ',
+                                        );
+                                  } else if (mainEntry['trigger'] != null) {
+                                    triggerText =
+                                        mainEntry['trigger'] as String;
+                                  }
+
+                                  if (triggerText.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.bolt_rounded,
+                                          size: 14,
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface
-                                              .withValues(alpha: 0.7),
+                                              .withValues(alpha: 0.6),
                                         ),
-                                      ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            triggerText,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.7),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ],
+                                  );
+                                },
+                              ),
                               if (mainEntry['emotions'] != null &&
                                   (mainEntry['emotions'] as List)
                                       .isNotEmpty) ...[
