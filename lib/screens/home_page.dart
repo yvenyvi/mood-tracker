@@ -14,9 +14,12 @@ import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/screens/mood_history_page.dart';
 import 'package:mood_tracker/screens/search_page.dart';
 import 'package:mood_tracker/widgets/mood_details_sheet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final GlobalKey? welcomeKey;
+
+  const HomePage({super.key, this.welcomeKey});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -126,12 +129,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Message
-              _buildWelcomeSection(user),
-              const SizedBox(height: 24),
-
-              // Daily Motivational Message
-              _buildDailyMessage(),
+              // Welcome & Daily Message Group
+              Container(
+                key: widget.welcomeKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildWelcomeSection(user),
+                    const SizedBox(height: 24),
+                    _buildDailyMessage(),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
 
               // Today's Mood Analytics
@@ -246,6 +255,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             onTap: () {
               Navigator.pop(context); // Close drawer
               _showAboutDialog(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.help_outline, color: colorScheme.onSurface),
+            title: Text(
+              'Reset Tutorial',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+            onTap: () async {
+              Navigator.pop(context);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('has_seen_tutorial');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Tutorial reset! Restart app to see it again.',
+                    ),
+                  ),
+                );
+              }
             },
           ),
           const Spacer(),
