@@ -1,15 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/widgets/mood_details_sheet.dart';
 
-class MoodHistoryPage extends StatelessWidget {
+class MoodHistoryPage extends StatefulWidget {
   final DateTime? selectedMonth;
 
   const MoodHistoryPage({super.key, this.selectedMonth});
+
+  @override
+  State<MoodHistoryPage> createState() => _MoodHistoryPageState();
+}
+
+class _MoodHistoryPageState extends State<MoodHistoryPage> {
+  late DateTime _currentMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use the passed month or start with current month
+    final initial = widget.selectedMonth ?? DateTime.now();
+    _currentMonth = DateTime(initial.year, initial.month, 1);
+  }
+
+  void _changeMonth(int offset) {
+    setState(() {
+      _currentMonth = DateTime(
+        _currentMonth.year,
+        _currentMonth.month + offset,
+        1,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +43,28 @@ class MoodHistoryPage extends StatelessWidget {
       return const Scaffold(body: Center(child: Text("Not logged in")));
     }
 
-    final targetDate = selectedMonth ?? DateTime.now();
-    final startOfMonth = DateTime(targetDate.year, targetDate.month, 1);
-    final nextMonth = DateTime(targetDate.year, targetDate.month + 1, 1);
+    // Calculate start and end of the current viewed month
+    final startOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    final nextMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
 
     return Scaffold(
-      appBar: AppBar(title: Text(DateFormat('MMMM yyyy').format(targetDate))),
+      appBar: AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: () => _changeMonth(-1),
+            ),
+            Text(AppDateUtils.formatMonthYear(_currentMonth)),
+            IconButton(
+              icon: const Icon(Icons.chevron_right),
+              onPressed: () => _changeMonth(1),
+            ),
+          ],
+        ),
+        centerTitle: true,
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -39,16 +80,36 @@ class MoodHistoryPage extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No mood entries found.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history_toggle_off,
+                    size: 64,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.2),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No mood entries for this month.',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
           // Group by day
           final moodData = <DateTime, List<Map<String, dynamic>>>{};
           for (var doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
-            final timestamp = (data['timestamp'] as Timestamp)
-                .toDate()
-                .toLocal();
+            final timestamp = AppDateUtils.getDateTime(data['timestamp']);
             final date = DateTime(
               timestamp.year,
               timestamp.month,
@@ -89,7 +150,7 @@ class MoodHistoryPage extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            DateFormat('d').format(date),
+                            date.day.toString(),
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w900,
@@ -97,7 +158,7 @@ class MoodHistoryPage extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            DateFormat('MMM').format(date).toUpperCase(),
+                            AppDateUtils.formatShortMonth(date).toUpperCase(),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -182,7 +243,7 @@ class MoodHistoryPage extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          DateFormat('h:mm a').format(date),
+                                          AppDateUtils.formatTime(date),
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
@@ -215,38 +276,57 @@ class MoodHistoryPage extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              if (mainEntry['trigger'] != null &&
-                                  (mainEntry['trigger'] as String)
-                                      .isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.bolt_rounded,
-                                      size: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        mainEntry['trigger'],
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 13,
+                              Builder(
+                                builder: (context) {
+                                  String triggerText = '';
+                                  if (mainEntry['triggers'] != null &&
+                                      (mainEntry['triggers'] as List)
+                                          .isNotEmpty) {
+                                    triggerText =
+                                        (mainEntry['triggers'] as List).join(
+                                          ', ',
+                                        );
+                                  } else if (mainEntry['trigger'] != null) {
+                                    triggerText =
+                                        mainEntry['trigger'] as String;
+                                  }
+
+                                  if (triggerText.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.bolt_rounded,
+                                          size: 14,
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurface
-                                              .withValues(alpha: 0.7),
+                                              .withValues(alpha: 0.6),
                                         ),
-                                      ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            triggerText,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.7),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ],
+                                  );
+                                },
+                              ),
                               if (mainEntry['emotions'] != null &&
                                   (mainEntry['emotions'] as List)
                                       .isNotEmpty) ...[

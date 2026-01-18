@@ -26,8 +26,10 @@ class AppTheme {
   ); // Slightly darker green/lavender
 
   static const Color trueLavender = Color(0xFFE0BBE4);
-  static const Color skyBlue = Color(0xFF957DAD); // A muted purple-blue
-  static const Color lightSkyBlue = Color(0xFFC7CEEA);
+  static const Color blossomPink = Color(
+    0xFFF06292,
+  ); // Pink 300 - Warm and friendly
+  static const Color softPink = Color(0xFFF48FB1); // Pink 200 - Softer variant
 
   static const Color backgroundWhite = Color(0xFFFDFDFD);
   static const Color surfaceWhite = Color(0xFFFFFFFF);
@@ -38,10 +40,10 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: backgroundWhite,
-      primaryColor: lightSkyBlue,
+      primaryColor: softPink,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: lightSkyBlue,
-        primary: lightSkyBlue,
+        seedColor: softPink,
+        primary: softPink,
         secondary: softPeachDarker,
         surface: surfaceWhite,
         error: Color(0xFFFFB7B2), // Pastel Red
@@ -93,7 +95,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(color: lightSkyBlue, width: 1.5),
+          borderSide: const BorderSide(color: softPink, width: 1.5),
         ),
         hintStyle: const TextStyle(color: textGrey),
       ),
@@ -101,7 +103,7 @@ class AppTheme {
       // ElevatedButton Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: lightSkyBlue,
+          backgroundColor: softPink,
           foregroundColor: textDark,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -115,7 +117,8 @@ class AppTheme {
       // TextButton Theme (For "See All" etc.)
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: skyBlue, // Darker blue for visibility on light bg
+          foregroundColor:
+              blossomPink, // Darker pink for visibility on light bg
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
@@ -123,7 +126,7 @@ class AppTheme {
       // NavigationBar Theme
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surfaceWhite,
-        indicatorColor: lightSkyBlue,
+        indicatorColor: softPink,
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -148,11 +151,11 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: const Color(0xFF121212),
-      primaryColor: skyBlue,
+      primaryColor: blossomPink,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: skyBlue,
+        seedColor: blossomPink,
         brightness: Brightness.dark,
-        primary: skyBlue,
+        primary: blossomPink,
         secondary: lavenderDarker,
         surface: const Color(0xFF1E1E1E),
         error: const Color(0xFFCF6679),
@@ -202,7 +205,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: const BorderSide(color: skyBlue, width: 1.5),
+          borderSide: const BorderSide(color: blossomPink, width: 1.5),
         ),
         hintStyle: const TextStyle(color: Colors.white38),
       ),
@@ -210,7 +213,7 @@ class AppTheme {
       // ElevatedButton Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: skyBlue,
+          backgroundColor: blossomPink,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -224,7 +227,7 @@ class AppTheme {
       // TextButton Theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: lightSkyBlue, // Lighter blue for dark bg
+          foregroundColor: softPink, // Lighter pink for dark bg
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
@@ -232,7 +235,7 @@ class AppTheme {
       // NavigationBar Theme
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: const Color(0xFF1E1E1E),
-        indicatorColor: skyBlue,
+        indicatorColor: blossomPink,
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {

@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
-import 'package:intl/intl.dart';
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:lottie/lottie.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -54,7 +55,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               : now.subtract(const Duration(days: 30));
 
           final filteredEntries = allEntries.where((e) {
-            final ts = (e['timestamp'] as Timestamp).toDate();
+            final ts = AppDateUtils.getDateTime(e['timestamp']);
             return ts.isAfter(cutoffDate);
           }).toList();
 
@@ -144,6 +145,65 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
                 const SizedBox(height: 32),
 
+                // Mood Composition (Pie Chart)
+                Text(
+                  'Mood Composition',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildMoodPieChart(context, filteredEntries),
+
+                const SizedBox(height: 32),
+
+                // Intensity Trend (Line Chart)
+                Text(
+                  'Intensity Trend',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Average intensity over time',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildIntensityLineChart(
+                  context,
+                  filteredEntries,
+                  _selectedTimeRange,
+                ),
+
+                const SizedBox(height: 32),
+
+                // Top Triggers
+                Text(
+                  'Top Triggers',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildTopTriggers(context, filteredEntries),
+
+                const SizedBox(height: 32),
+
+                // Frequent Emotions
+                Text(
+                  'Frequent Emotions',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildFrequentEmotions(context, filteredEntries),
+
+                const SizedBox(height: 32),
+
                 // Emotional Replay Section
                 Text(
                   'Emotional Replay',
@@ -160,22 +220,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 ),
                 const SizedBox(height: 16),
                 _buildEmotionalReplay(context, filteredEntries),
-
-                const SizedBox(height: 32),
-
-                // Weekly/Monthly Chart
-                Text(
-                  _selectedTimeRange == 'Week'
-                      ? 'Daily Intensity'
-                      : 'Weekly Intensity',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _selectedTimeRange == 'Week'
-                    ? _buildDailyIntensityChart(context, filteredEntries)
-                    : _buildWeeklyAverageChart(context, filteredEntries),
               ],
             ),
           );
@@ -287,7 +331,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     int streak = 0;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final newestEntryTime = (entries.first['timestamp'] as Timestamp).toDate();
+    final newestEntryTime = AppDateUtils.getDateTime(
+      entries.first['timestamp'],
+    );
     final newestEntryDate = DateTime(
       newestEntryTime.year,
       newestEntryTime.month,
@@ -306,8 +352,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
     Set<String> uniqueDays = {};
     for (var entry in entries) {
-      final ts = (entry['timestamp'] as Timestamp).toDate();
-      final dateKey = DateFormat('yyyy-MM-dd').format(ts);
+      final ts = AppDateUtils.getDateTime(entry['timestamp']);
+      final dateKey = AppDateUtils.formatIsoDate(ts);
       if (!uniqueDays.contains(dateKey)) {
         uniqueDays.add(dateKey);
         final date = DateTime(ts.year, ts.month, ts.day);
@@ -442,64 +488,179 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return stops;
   }
 
-  Widget _buildDailyIntensityChart(
+  Widget _buildMoodPieChart(
     BuildContext context,
     List<Map<String, dynamic>> entries,
   ) {
-    final now = DateTime.now();
-    final last7Days = List.generate(
-      7,
-      (i) => now.subtract(Duration(days: 6 - i)),
-    );
+    final counts = _calculateMoodCounts(entries);
+    if (counts.isEmpty) {
+      return const SizedBox(height: 200, child: Center(child: Text('No Data')));
+    }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: last7Days.map((date) {
-        final dateStr = DateFormat('yyyy-MM-dd').format(date);
-        final dayEntries = entries.where((e) {
-          final ts = (e['timestamp'] as Timestamp).toDate();
-          return DateFormat('yyyy-MM-dd').format(ts) == dateStr;
-        }).toList();
+    final total = entries.length;
+    final List<PieChartSectionData> sections = counts.entries.map((e) {
+      final mood = e.key;
+      final count = e.value;
+      final percentage = count / total;
+      final color = MoodAssets.getMoodColor(mood);
 
-        double avg = 0;
-        Color barColor = Colors.grey.withValues(alpha: 0.2);
+      return PieChartSectionData(
+        color: color,
+        value: count.toDouble(),
+        title: '${(percentage * 100).toStringAsFixed(0)}%',
+        radius: 50,
+        titleStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
+    }).toList();
 
-        if (dayEntries.isNotEmpty) {
-          avg = _calculateAverageIntensity(dayEntries);
-          final counts = _calculateMoodCounts(dayEntries);
-          final dominant = counts.entries
-              .reduce((a, b) => a.value > b.value ? a : b)
-              .key;
-          barColor = MoodAssets.getMoodColor(dominant);
-        }
-
-        final dayLabel = DateFormat('E').format(date)[0];
-
-        return _chartBar(context, avg, barColor, dayLabel);
-      }).toList(),
+    return SizedBox(
+      height: 200,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PieChart(
+            PieChartData(
+              sections: sections,
+              centerSpaceRadius: 40,
+              sectionsSpace: 2,
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$total',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text('Entries', style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildWeeklyAverageChart(
+  Widget _buildIntensityLineChart(
     BuildContext context,
     List<Map<String, dynamic>> entries,
+    String range,
   ) {
-    // Last 4 weeks
+    List<FlSpot> spots = [];
+    double interval = 1.0;
+    double maxX = 6.0;
+
+    if (range == 'Week') {
+      spots = _getWeekData(entries);
+      maxX = 6.0;
+      interval = 1.0;
+    } else {
+      spots = _getMonthData(entries);
+      maxX = 3.0; // 4 weeks (0,1,2,3)
+      interval = 1.0;
+    }
+
+    return SizedBox(
+      height: 200,
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  if (range == 'Week') {
+                    final date = DateTime.now().subtract(
+                      Duration(days: 6 - value.toInt()),
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        AppDateUtils.formatShortWeekday(date)[0],
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    );
+                  } else {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'W${4 - value.toInt()}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    );
+                  }
+                },
+                interval: interval,
+              ),
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          minX: 0,
+          maxX: maxX,
+          minY: 0,
+          maxY: 5.5, // Intensity 1-5
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              color: Theme.of(context).colorScheme.primary,
+              barWidth: 3,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: true),
+              belowBarData: BarAreaData(
+                show: true,
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<FlSpot> _getWeekData(List<Map<String, dynamic>> entries) {
     final now = DateTime.now();
-    final List<Widget> bars = [];
+    List<FlSpot> spots = [];
+
+    for (int i = 6; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+      final dateStr = AppDateUtils.formatIsoDate(date);
+      final dayEntries = entries.where((e) {
+        final ts = AppDateUtils.getDateTime(e['timestamp']);
+        return AppDateUtils.formatIsoDate(ts) == dateStr;
+      }).toList();
+
+      if (dayEntries.isNotEmpty) {
+        final avg = _calculateAverageIntensity(dayEntries);
+        spots.add(FlSpot((6 - i).toDouble(), avg));
+      } else {
+        spots.add(FlSpot((6 - i).toDouble(), 0));
+      }
+    }
+    return spots;
+  }
+
+  List<FlSpot> _getMonthData(List<Map<String, dynamic>> entries) {
+    final now = DateTime.now();
+    List<FlSpot> spots = [];
 
     for (int i = 3; i >= 0; i--) {
-      // Start of week (Monday)
-      // Normalize today to start of week to find generic "Week X" ranges
-      // Simplified: Just 7 days blocks going back
       final end = now.subtract(Duration(days: i * 7));
       final start = end.subtract(const Duration(days: 6));
 
       final weekEntries = entries.where((e) {
-        final ts = (e['timestamp'] as Timestamp).toDate();
-        // Check inclusive range
-        // Reset times for simpler comparison
+        final ts = AppDateUtils.getDateTime(e['timestamp']);
         final d = DateTime(ts.year, ts.month, ts.day);
         final s = DateTime(start.year, start.month, start.day);
         final en = DateTime(end.year, end.month, end.day);
@@ -507,55 +668,140 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             (d.isBefore(en) || d.isAtSameMomentAs(en));
       }).toList();
 
-      double avg = 0;
-      Color barColor = Colors.grey.withValues(alpha: 0.2);
       if (weekEntries.isNotEmpty) {
-        avg = _calculateAverageIntensity(weekEntries);
-        final counts = _calculateMoodCounts(weekEntries);
-        final dominant = counts.entries
-            .reduce((a, b) => a.value > b.value ? a : b)
-            .key;
-        barColor = MoodAssets.getMoodColor(dominant);
+        final avg = _calculateAverageIntensity(weekEntries);
+        spots.add(FlSpot((3 - i).toDouble(), avg));
+      } else {
+        spots.add(FlSpot((3 - i).toDouble(), 0));
       }
+    }
+    return spots;
+  }
 
-      bars.add(_chartBar(context, avg, barColor, 'W${4 - i}'));
+  Widget _buildTopTriggers(
+    BuildContext context,
+    List<Map<String, dynamic>> entries,
+  ) {
+    final counts = _calculateTriggerCounts(entries);
+    if (counts.isEmpty) {
+      return const Text('No triggers recorded yet.');
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: bars,
+    // Sort by count descending
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = sorted.take(5).toList();
+
+    return Column(
+      children: top.map((e) {
+        final count = e.value;
+        final totalFn = entries
+            .where((entry) => entry['trigger'] != null)
+            .length;
+        final pct = (count / totalFn);
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  e.key,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: LinearProgressIndicator(
+                  value: pct,
+                  backgroundColor: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${(pct * 100).toInt()}%',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
-  Widget _chartBar(
+  Map<String, int> _calculateTriggerCounts(List<Map<String, dynamic>> entries) {
+    Map<String, int> counts = {};
+    for (var entry in entries) {
+      // Handle new list format
+      if (entry['triggers'] != null && (entry['triggers'] as List).isNotEmpty) {
+        final triggers = entry['triggers'] as List;
+        for (var t in triggers) {
+          final tStr = t.toString().trim();
+          if (tStr.isNotEmpty) {
+            counts[tStr] = (counts[tStr] ?? 0) + 1;
+          }
+        }
+      }
+      // Handle legacy string format (fallback if list is missing/empty)
+      else {
+        final trigger = entry['trigger'] as String?;
+        if (trigger != null && trigger.isNotEmpty) {
+          // Some legacy entries might be comma separated manually
+          final parts = trigger.split(',');
+          for (var part in parts) {
+            final t = part.trim();
+            if (t.isNotEmpty) {
+              counts[t] = (counts[t] ?? 0) + 1;
+            }
+          }
+        }
+      }
+    }
+    return counts;
+  }
+
+  Widget _buildFrequentEmotions(
     BuildContext context,
-    double value,
-    Color color,
-    String label,
+    List<Map<String, dynamic>> entries,
   ) {
-    return Column(
-      children: [
-        Container(
-          width: 12,
-          height: 100,
-          alignment: Alignment.bottomCenter,
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Container(
-            width: 12,
-            height: (value / 5) * 100, // Normalize 1-5
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
+    final counts = _calculateEmotionCounts(entries);
+    if (counts.isEmpty) {
+      return const Text('No emotions recorded yet.');
+    }
+
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = sorted.take(10).toList();
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: top.map((e) {
+        return Chip(
+          label: Text('${e.key} (${e.value})'),
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          side: BorderSide.none,
+        );
+      }).toList(),
     );
+  }
+
+  Map<String, int> _calculateEmotionCounts(List<Map<String, dynamic>> entries) {
+    Map<String, int> counts = {};
+    for (var entry in entries) {
+      final emotions = entry['emotions'] as List?;
+      if (emotions != null) {
+        for (var e in emotions) {
+          final eStr = e.toString();
+          counts[eStr] = (counts[eStr] ?? 0) + 1;
+        }
+      }
+    }
+    return counts;
   }
 }

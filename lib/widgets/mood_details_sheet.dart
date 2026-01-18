@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
-
+import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/widgets/single_entry_detail_sheet.dart';
 
 class MoodDetailsSheet extends StatelessWidget {
@@ -21,9 +19,7 @@ class MoodDetailsSheet extends StatelessWidget {
       );
     }
 
-    final firstTimestamp = (entries.first['timestamp'] as Timestamp)
-        .toDate()
-        .toLocal();
+    final firstTimestamp = AppDateUtils.getDateTime(entries.first['timestamp']);
 
     return Container(
       constraints: BoxConstraints(
@@ -38,7 +34,7 @@ class MoodDetailsSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                DateFormat('EEEE, MMMM d, yyyy').format(firstTimestamp),
+                AppDateUtils.formatFullDate(firstTimestamp),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -58,9 +54,9 @@ class MoodDetailsSheet extends StatelessWidget {
               separatorBuilder: (context, index) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final moodData = entries[index];
-                final timestamp = (moodData['timestamp'] as Timestamp)
-                    .toDate()
-                    .toLocal();
+                final timestamp = AppDateUtils.getDateTime(
+                  moodData['timestamp'],
+                );
                 final mood = moodData['mood'] ?? 'Neutral';
                 final color = MoodAssets.getMoodColor(mood);
 
@@ -116,7 +112,7 @@ class MoodDetailsSheet extends StatelessWidget {
                                 Row(
                                   children: [
                                     Text(
-                                      DateFormat('h:mm a').format(timestamp),
+                                      AppDateUtils.formatTime(timestamp),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,

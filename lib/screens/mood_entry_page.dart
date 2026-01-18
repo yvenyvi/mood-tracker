@@ -15,6 +15,8 @@ class MoodEntryPage extends StatefulWidget {
 class _MoodEntryPageState extends State<MoodEntryPage> {
   final _noteController = TextEditingController();
   final _triggerController = TextEditingController();
+  final _copingController = TextEditingController();
+  final _symptomController = TextEditingController();
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   String _currentPrompt = '';
   bool _isSaving = false;
 
+  final Set<String> _selectedTriggers = {};
   final Set<String> _selectedEmotions = {};
   final Set<String> _selectedCopingStrategies = {};
   final Set<String> _selectedSymptoms = {};
@@ -37,7 +40,46 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   void dispose() {
     _noteController.dispose();
     _triggerController.dispose();
+    _copingController.dispose();
+    _symptomController.dispose();
     super.dispose();
+  }
+
+  Future<void> _processNewItems(
+    String input,
+    Set<String> selectedSet,
+    String collectionName,
+    String userId,
+  ) async {
+    if (input.isEmpty) return;
+
+    final newItems = input
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty);
+
+    for (var item in newItems) {
+      if (!selectedSet.contains(item)) {
+        selectedSet.add(item);
+      }
+
+      // Persist for future validation
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection(collectionName)
+          .where('name', isEqualTo: item)
+          .get()
+          .then((snapshot) {
+            if (snapshot.docs.isEmpty) {
+              FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(userId)
+                  .collection(collectionName)
+                  .add({'name': item, 'created_at': DateTime.now()});
+            }
+          });
+    }
   }
 
   Future<void> _saveMood() async {
@@ -54,6 +96,30 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     setState(() => _isSaving = true);
 
     try {
+      // 1. Process new items for all dynamic fields
+      await Future.wait([
+        _processNewItems(
+          _triggerController.text.trim(),
+          _selectedTriggers,
+          'triggers',
+          user.uid,
+        ),
+        _processNewItems(
+          _copingController.text.trim(),
+          _selectedCopingStrategies,
+          'coping_strategies',
+          user.uid,
+        ),
+        _processNewItems(
+          _symptomController.text.trim(),
+          _selectedSymptoms,
+          'physical_symptoms',
+          user.uid,
+        ),
+      ]);
+
+      final List<String> allTriggers = List.from(_selectedTriggers);
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -62,7 +128,8 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             'intensity': MoodAssets.getIntensity(_selectedMood),
             'mood': _selectedMood,
             'note': _noteController.text.trim(),
-            'trigger': _triggerController.text.trim(),
+            'trigger': allTriggers.join(', '), // Legacy support
+            'triggers': allTriggers, // New list format
 
             'emotions': _selectedEmotions.toList(),
             'coping_strategies': _selectedCopingStrategies.toList(),
@@ -80,6 +147,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           _selectedMood = 'Neutral';
           _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
 
+          _selectedTriggers.clear();
           _selectedEmotions.clear();
           _selectedCopingStrategies.clear();
           _selectedSymptoms.clear();
@@ -259,25 +327,15 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
             const SizedBox(height: 32),
 
-            // Trigger Input
-            Text(
+            // Triggers Section
+            _buildDynamicSection(
+              context,
+              user?.uid,
+              'triggers',
               'What triggered this?',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _triggerController,
-              decoration: InputDecoration(
-                hintText: 'e.g., Work deadline, Argument with friend...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-              ),
+              _selectedTriggers,
+              _triggerController,
+              'Add new trigger (e.g. Traffic, News)...',
             ),
 
             const SizedBox(height: 32),
@@ -308,23 +366,27 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             const SizedBox(height: 32),
 
             // Coping Strategies Section
-            _buildSelectionSection(
+            _buildDynamicSection(
               context,
               user?.uid,
               'coping_strategies',
               'Did anything help? (Safety Menu)',
               _selectedCopingStrategies,
+              _copingController,
+              'Add helpful activity (e.g. Walk, Music)...',
             ),
 
             const SizedBox(height: 32),
 
             // Physical Symptoms Section
-            _buildSelectionSection(
+            _buildDynamicSection(
               context,
               user?.uid,
               'physical_symptoms',
               'Physical Symptoms',
               _selectedSymptoms,
+              _symptomController,
+              'Add symptom (e.g. Headache, Tiredness)...',
             ),
 
             const SizedBox(height: 32),
@@ -361,12 +423,14 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     );
   }
 
-  Widget _buildSelectionSection(
+  Widget _buildDynamicSection(
     BuildContext context,
     String? userId,
     String collection,
     String title,
     Set<String> selectedSet,
+    TextEditingController controller,
+    String hintText,
   ) {
     if (userId == null) return const SizedBox.shrink();
 
@@ -412,60 +476,74 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             }
 
             final docs = snapshot.data!.docs;
-            if (docs.isEmpty) {
-              return Text(
-                'No items found. Add them in your Profile.',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            // Only show if we have items, otherwise the adding prompt is enough
+            if (docs.isNotEmpty) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: docs.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final name = data['name'] as String? ?? '';
+                    final isSelected = selectedSet.contains(name);
+
+                    return FilterChip(
+                      label: Text(name),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            selectedSet.add(name);
+                          } else {
+                            selectedSet.remove(name);
+                          }
+                        });
+                      },
+                      backgroundColor: Theme.of(
+                        context,
+                      ).inputDecorationTheme.fillColor,
+                      selectedColor: primaryColor.withValues(
+                        alpha: isDark ? 0.4 : 0.2,
+                      ),
+                      checkmarkColor: isSelected
+                          ? (isDark ? Colors.white : primaryColor)
+                          : null,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? (isDark ? Colors.white : primaryColor)
+                            : Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      side: isSelected
+                          ? BorderSide(color: primaryColor)
+                          : BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    );
+                  }).toList(),
+                ),
               );
             }
-
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: docs.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                final name = data['name'] as String? ?? '';
-                final isSelected = selectedSet.contains(name);
-
-                return FilterChip(
-                  label: Text(name),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        selectedSet.add(name);
-                      } else {
-                        selectedSet.remove(name);
-                      }
-                    });
-                  },
-                  backgroundColor: Theme.of(
-                    context,
-                  ).inputDecorationTheme.fillColor,
-                  selectedColor: primaryColor.withValues(
-                    alpha: isDark ? 0.4 : 0.2,
-                  ),
-                  checkmarkColor: isSelected
-                      ? (isDark ? Colors.white : primaryColor)
-                      : null,
-                  labelStyle: TextStyle(
-                    color: isSelected
-                        ? (isDark ? Colors.white : primaryColor)
-                        : Theme.of(context).textTheme.bodyLarge?.color,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                  side: isSelected
-                      ? BorderSide(color: primaryColor)
-                      : BorderSide.none,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                );
-              }).toList(),
-            );
+            return const SizedBox.shrink();
           },
+        ),
+
+        // Text Input for adding new items
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: hintText,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+          ),
         ),
       ],
     );
