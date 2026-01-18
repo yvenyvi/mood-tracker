@@ -47,30 +47,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _loginAnonymously() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await Provider.of<AuthService>(
-        context,
-        listen: false,
-      ).signInAnonymously();
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   void _showForgotPasswordDialog() {
     final emailController = TextEditingController();
     showDialog(
@@ -439,29 +415,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ],
-                    ),
-
-                    // Guest Mode
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: TextButton.icon(
-                        onPressed: _loginAnonymously,
-                        icon: Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: theme.textTheme.bodyMedium?.color?.withValues(
-                            alpha: 0.7,
-                          ),
-                        ),
-                        label: Text(
-                          'Just want to vent anonymously?',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ),
                     ),
                   ],
                 ),
