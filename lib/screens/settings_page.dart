@@ -6,11 +6,62 @@ import 'package:flutter/material.dart';
 import 'package:mood_tracker/providers/theme_provider.dart';
 import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/services/auth_service.dart';
+import 'package:mood_tracker/services/biometric_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _isAppLockEnabled = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isAppLockEnabled = prefs.getBool('app_lock_enabled') ?? false;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _updateAppLockSettings(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // If enabling, check if available and authenticate first
+    if (enabled) {
+      final bioService = BiometricService();
+      if (!await bioService.isBiometricAvailable()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Biometrics not available on this device'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final authenticated = await bioService.authenticate();
+      if (!authenticated) return;
+    }
+
+    await prefs.setBool('app_lock_enabled', enabled);
+    setState(() {
+      _isAppLockEnabled = enabled;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,80 +71,115 @@ class SettingsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) {
-          return ListView(
-            children: [
-              // Appearance Section
-              ListTile(
-                title: Text(
-                  'Appearance',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              RadioGroup<ThemeMode>(
-                groupValue: themeProvider.themeMode,
-                onChanged: (value) {
-                  if (value != null) {
-                    themeProvider.setThemeMode(value);
-                  }
-                },
-                child: Column(
-                  children: const [
-                    RadioListTile<ThemeMode>(
-                      title: Text('System Default'),
-                      value: ThemeMode.system,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Consumer<ThemeProvider>(
+              builder: (context, themeProvider, child) {
+                return ListView(
+                  children: [
+                    const Divider(),
+
+                    // Appearance Section
+                    ListTile(
+                      title: Text(
+                        'Appearance',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
                     ),
-                    RadioListTile<ThemeMode>(
-                      title: Text('Light Theme'),
-                      value: ThemeMode.light,
+                    RadioGroup<ThemeMode>(
+                      groupValue: themeProvider.themeMode,
+                      onChanged: (value) {
+                        if (value != null) {
+                          themeProvider.setThemeMode(value);
+                        }
+                      },
+                      child: Column(
+                        children: const [
+                          RadioListTile<ThemeMode>(
+                            title: Text('System Default'),
+                            value: ThemeMode.system,
+                          ),
+                          RadioListTile<ThemeMode>(
+                            title: Text('Light Theme'),
+                            value: ThemeMode.light,
+                          ),
+                          RadioListTile<ThemeMode>(
+                            title: Text('Dark Theme'),
+                            value: ThemeMode.dark,
+                          ),
+                        ],
+                      ),
                     ),
-                    RadioListTile<ThemeMode>(
-                      title: Text('Dark Theme'),
-                      value: ThemeMode.dark,
+
+                    const Divider(),
+
+                    // Security Section
+                    ListTile(
+                      title: Text(
+                        'Security',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                    SwitchListTile(
+                      title: const Text('App Lock'),
+                      subtitle: const Text(
+                        'Require FaceID/Fingerprint to unlock',
+                      ),
+                      value: _isAppLockEnabled,
+                      onChanged: (value) {
+                        _updateAppLockSettings(value);
+                      },
+                    ),
+
+                    const Divider(),
+
+                    // Data Management Section
+                    ListTile(
+                      title: Text(
+                        'Data Management',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+
+                    // Export Data
+                    ListTile(
+                      leading: const Icon(Icons.file_download),
+                      title: const Text('Export Data'),
+                      subtitle: const Text('Download all mood logs as JSON'),
+                      onTap: () => _exportData(context, user?.uid),
+                    ),
+
+                    // Delete Data
+                    ListTile(
+                      leading: const Icon(
+                        Icons.delete_forever,
+                        color: Colors.red,
+                      ),
+                      title: const Text(
+                        'Delete All Data',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      subtitle: const Text(
+                        'Permanently remove all mood entries',
+                      ),
+                      onTap: () => _showDeleteConfirmation(context, user?.uid),
                     ),
                   ],
-                ),
-              ),
-
-              const Divider(),
-
-              // Data Management Section
-              ListTile(
-                title: Text(
-                  'Data Management',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              // Export Data
-              ListTile(
-                leading: const Icon(Icons.file_download),
-                title: const Text('Export Data'),
-                subtitle: const Text('Download all mood logs as JSON'),
-                onTap: () => _exportData(context, user?.uid),
-              ),
-
-              // Delete Data
-              ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.red),
-                title: const Text(
-                  'Delete All Data',
-                  style: TextStyle(color: Colors.red),
-                ),
-                subtitle: const Text('Permanently remove all mood entries'),
-                onTap: () => _showDeleteConfirmation(context, user?.uid),
-              ),
-            ],
-          );
-        },
-      ),
+                );
+              },
+            ),
     );
   }
 
@@ -121,7 +207,6 @@ class SettingsPage extends StatelessWidget {
 
       final data = querySnapshot.docs.map((doc) {
         final docData = doc.data();
-        // Convert Timestamp to ISO8601 String for JSON
         // Convert Timestamp to ISO8601 String for JSON
         docData['timestamp'] = AppDateUtils.getDateTime(
           docData['timestamp'],

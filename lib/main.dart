@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:mood_tracker/screens/main_screen.dart';
+import 'package:mood_tracker/screens/lock_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,10 +61,70 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           final user = snapshot.data;
-          return user == null ? const LoginPage() : MainScreen();
+          return user == null
+              ? const LoginPage()
+              : const BiometricWrapper(child: MainScreen());
         }
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
+  }
+}
+
+class BiometricWrapper extends StatefulWidget {
+  final Widget child;
+  const BiometricWrapper({super.key, required this.child});
+
+  @override
+  State<BiometricWrapper> createState() => _BiometricWrapperState();
+}
+
+class _BiometricWrapperState extends State<BiometricWrapper> {
+  bool _isLocked = true; // Default to locked, will unlock if disabled
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLockStatus();
+  }
+
+  Future<void> _checkLockStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLockEnabled = prefs.getBool('app_lock_enabled') ?? false;
+
+    if (!isLockEnabled) {
+      if (mounted) {
+        setState(() {
+          _isLocked = false;
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_isLocked) {
+      return LockScreen(
+        onUnlock: () {
+          setState(() {
+            _isLocked = false;
+          });
+        },
+      );
+    }
+
+    return widget.child;
   }
 }
