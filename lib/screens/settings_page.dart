@@ -7,6 +7,7 @@ import 'package:mood_tracker/providers/theme_provider.dart';
 import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/services/biometric_service.dart';
+import 'package:mood_tracker/services/notification_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,12 +21,14 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _isAppLockEnabled = false;
+  List<TimeOfDay> _reminders = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _loadReminders();
   }
 
   Future<void> _loadSettings() async {
@@ -61,6 +64,87 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _isAppLockEnabled = enabled;
     });
+  }
+
+  Future<void> _loadReminders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> storedReminders = prefs.getStringList('reminders') ?? [];
+    setState(() {
+      _reminders = storedReminders.map((time) {
+        final parts = time.split(':');
+        return TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }).toList();
+      _reminders.sort((a, b) {
+        if (a.hour != b.hour) return a.hour.compareTo(b.hour);
+        return a.minute.compareTo(b.minute);
+      });
+    });
+  }
+
+  Future<void> _addReminder() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (picked != null) {
+      if (_reminders.any(
+        (t) => t.hour == picked.hour && t.minute == picked.minute,
+      )) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Reminder already exists.')),
+          );
+        }
+        return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _reminders.add(picked);
+        _reminders.sort((a, b) {
+          if (a.hour != b.hour) return a.hour.compareTo(b.hour);
+          return a.minute.compareTo(b.minute);
+        });
+      });
+
+      await _saveReminders(prefs);
+      await _scheduleReminders();
+    }
+  }
+
+  Future<void> _deleteReminder(TimeOfDay time) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _reminders.removeWhere(
+        (t) => t.hour == time.hour && t.minute == time.minute,
+      );
+    });
+    await _saveReminders(prefs);
+    await _scheduleReminders();
+  }
+
+  Future<void> _saveReminders(SharedPreferences prefs) async {
+    final List<String> timeStrings = _reminders
+        .map((t) => '${t.hour}:${t.minute.toString().padLeft(2, '0')}')
+        .toList();
+    await prefs.setStringList('reminders', timeStrings);
+  }
+
+  Future<void> _scheduleReminders() async {
+    await NotificationService().cancelAllNotifications();
+    for (int i = 0; i < _reminders.length; i++) {
+      await NotificationService().scheduleDailyNotification(
+        id: i,
+        time: _reminders[i],
+        title: 'Time to log your mood!',
+        body: 'How are you feeling right now?',
+      );
+    }
+    await NotificationService().requestPermissions();
   }
 
   @override
@@ -139,6 +223,70 @@ class _SettingsPageState extends State<SettingsPage> {
                       },
                     ),
 
+                    const Divider(),
+
+                    // Reminders Section
+                    ListTile(
+                      title: Text(
+                        'Reminders',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.add_alarm),
+                        onPressed: _addReminder,
+                        tooltip: 'Add Reminder',
+                      ),
+                    ),
+                    if (_reminders.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Text(
+                          'No reminders set. Tap + to add one.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    else
+                      ..._reminders.map(
+                        (time) => ListTile(
+                          leading: const Icon(Icons.notifications_active),
+                          title: Text(time.format(context)),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () => _deleteReminder(time),
+                          ),
+                        ),
+                      ),
+                    if (_reminders.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            await NotificationService().showInstantNotification(
+                              id: 999,
+                              title: 'Test Notification',
+                              body: 'This is a test reminder from Emote.',
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Notification sent! (Wait a few seconds)',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.mark_chat_unread_outlined),
+                          label: const Text('Send Test Notification'),
+                        ),
+                      ),
                     const Divider(),
 
                     // Data Management Section
