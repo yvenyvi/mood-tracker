@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
+import 'package:mood_tracker/screens/user_guide_page.dart';
 
 class MoodEntryPage extends StatefulWidget {
   const MoodEntryPage({super.key});
@@ -17,6 +18,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   final _triggerController = TextEditingController();
   final _copingController = TextEditingController();
   final _symptomController = TextEditingController();
+  final _emotionController = TextEditingController();
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     _triggerController.dispose();
     _copingController.dispose();
     _symptomController.dispose();
+    _emotionController.dispose();
     super.dispose();
   }
 
@@ -64,21 +67,56 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
       }
 
       // Persist for future validation
-      FirebaseFirestore.instance
+      final querySnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .collection(collectionName)
           .where('name', isEqualTo: item)
-          .get()
-          .then((snapshot) {
-            if (snapshot.docs.isEmpty) {
-              FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(userId)
-                  .collection(collectionName)
-                  .add({'name': item, 'created_at': DateTime.now()});
-            }
-          });
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection(collectionName)
+            .add({'name': item, 'created_at': DateTime.now()});
+      }
+    }
+  }
+
+  Future<void> _processNewEmotions(String input, String userId) async {
+    if (input.isEmpty) return;
+
+    final newItems = input
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty);
+
+    for (var item in newItems) {
+      if (!_selectedEmotions.contains(item)) {
+        _selectedEmotions.add(item);
+      }
+
+      // Check if emotion already exists for this mood
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('custom_emotions')
+          .where('name', isEqualTo: item)
+          .where('mood', isEqualTo: _selectedMood)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .collection('custom_emotions')
+            .add({
+              'name': item,
+              'mood': _selectedMood,
+              'created_at': DateTime.now(),
+            });
+      }
     }
   }
 
@@ -116,6 +154,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           'physical_symptoms',
           user.uid,
         ),
+        _processNewEmotions(_emotionController.text.trim(), user.uid),
       ]);
 
       final List<String> allTriggers = List.from(_selectedTriggers);
@@ -143,6 +182,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
         );
         _noteController.clear();
         _triggerController.clear();
+        _emotionController.clear();
+        _copingController.clear();
+        _symptomController.clear();
         setState(() {
           _selectedMood = 'Neutral';
           _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
@@ -171,7 +213,21 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     final currentColor = MoodAssets.getMoodColor(_selectedMood);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mood Tracker')),
+      appBar: AppBar(
+        title: const Text('Mood Tracker'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'User Guide',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserGuidePage()),
+              );
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -183,12 +239,11 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            Text(
+            _buildSectionHeaderWithTooltip(
+              context,
               'How are you feeling right now?',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
+              'Select the category that best matches your current mood.',
+              isCenter: true,
             ),
             const SizedBox(height: 32),
 
@@ -270,59 +325,103 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             const SizedBox(height: 32),
 
             // Specific Emotions Chips (Context Aware)
-            Text(
+            _buildSectionHeaderWithTooltip(
+              context,
               'What specifically?',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              'Choose specific emotions or add your own related to $_selectedMood.',
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: (MoodAssets.emotions[_selectedMood] ?? []).map((
-                emotion,
-              ) {
-                final isSelected = _selectedEmotions.contains(emotion);
-                final isDark = Theme.of(context).brightness == Brightness.dark;
-
-                return FilterChip(
-                  label: Text(emotion),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedEmotions.add(emotion);
-                      } else {
-                        _selectedEmotions.remove(emotion);
-                      }
-                    });
-                  },
-                  backgroundColor: Theme.of(
-                    context,
-                  ).inputDecorationTheme.fillColor,
-                  selectedColor: currentColor.withValues(
-                    alpha: isDark ? 0.4 : 0.2,
-                  ),
-                  checkmarkColor: isSelected
-                      ? (isDark ? Colors.white : currentColor)
-                      : null,
-                  labelStyle: TextStyle(
-                    color: isSelected
-                        ? (isDark ? Colors.white : currentColor)
-                        : Theme.of(context).textTheme.bodyLarge?.color,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                  side: isSelected
-                      ? BorderSide(color: currentColor)
-                      : BorderSide.none,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+            StreamBuilder<QuerySnapshot>(
+              stream: user != null
+                  ? FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .collection('custom_emotions')
+                        .where('mood', isEqualTo: _selectedMood)
+                        .snapshots()
+                  : null,
+              builder: (context, snapshot) {
+                final List<String> availableEmotions = List.from(
+                  MoodAssets.emotions[_selectedMood] ?? [],
                 );
-              }).toList(),
+
+                if (snapshot.hasData) {
+                  for (var doc in snapshot.data!.docs) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final name = data['name'] as String?;
+                    if (name != null && !availableEmotions.contains(name)) {
+                      availableEmotions.add(name);
+                    }
+                  }
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: availableEmotions.map((emotion) {
+                        final isSelected = _selectedEmotions.contains(emotion);
+                        final isDark =
+                            Theme.of(context).brightness == Brightness.dark;
+
+                        return FilterChip(
+                          label: Text(emotion),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedEmotions.add(emotion);
+                              } else {
+                                _selectedEmotions.remove(emotion);
+                              }
+                            });
+                          },
+                          backgroundColor: Theme.of(
+                            context,
+                          ).inputDecorationTheme.fillColor,
+                          selectedColor: currentColor.withValues(
+                            alpha: isDark ? 0.4 : 0.2,
+                          ),
+                          checkmarkColor: isSelected
+                              ? (isDark ? Colors.white : currentColor)
+                              : null,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? (isDark ? Colors.white : currentColor)
+                                : Theme.of(context).textTheme.bodyLarge?.color,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                          side: isSelected
+                              ? BorderSide(color: currentColor)
+                              : BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _emotionController,
+                      decoration: InputDecoration(
+                        hintText: 'Add other emotions (e.g. Melancholy)...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).inputDecorationTheme.fillColor,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 32),
@@ -333,6 +432,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               user?.uid,
               'triggers',
               'What triggered this?',
+              'Select or add triggers responsible for this mood.',
               _selectedTriggers,
               _triggerController,
               'Add new trigger (e.g. Traffic, News)...',
@@ -370,7 +470,8 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               context,
               user?.uid,
               'coping_strategies',
-              'Did anything help? (Safety Menu)',
+              'Did anything help?',
+              'Select strategies that helped you cope.',
               _selectedCopingStrategies,
               _copingController,
               'Add helpful activity (e.g. Walk, Music)...',
@@ -384,6 +485,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               user?.uid,
               'physical_symptoms',
               'Physical Symptoms',
+              'Note any physical sensations you are experiencing.',
               _selectedSymptoms,
               _symptomController,
               'Add symptom (e.g. Headache, Tiredness)...',
@@ -428,6 +530,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     String? userId,
     String collection,
     String title,
+    String tooltip,
     Set<String> selectedSet,
     TextEditingController controller,
     String hintText,
@@ -440,12 +543,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
+        _buildSectionHeaderWithTooltip(context, title, tooltip),
         const SizedBox(height: 16),
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
@@ -543,6 +641,59 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             ),
             filled: true,
             fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeaderWithTooltip(
+    BuildContext context,
+    String title,
+    String tooltip, {
+    bool isCenter = false,
+  }) {
+    return Row(
+      mainAxisAlignment: isCenter
+          ? MainAxisAlignment.center
+          : MainAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: isCenter
+              ? Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: Colors.grey[600])
+              : Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(width: 8),
+        Tooltip(
+          message: tooltip,
+          triggerMode: TooltipTriggerMode.tap,
+          showDuration: const Duration(seconds: 3),
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(25),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          textStyle: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 14,
+          ),
+          child: Icon(
+            Icons.help_outline,
+            size: 18,
+            color: Theme.of(context).colorScheme.primary.withAlpha(150),
           ),
         ),
       ],

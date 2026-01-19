@@ -15,6 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
   String? _errorMessage;
 
   Future<void> _register() async {
@@ -256,6 +257,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             // Password
                             TextFormField(
                               controller: _passwordController,
+                              obscureText: !_isPasswordVisible,
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 prefixIcon: Icon(
@@ -263,6 +265,21 @@ class _RegisterPageState extends State<RegisterPage> {
                                   color: theme.colorScheme.primary.withValues(
                                     alpha: 0.7,
                                   ),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isPasswordVisible
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isPasswordVisible = !_isPasswordVisible;
+                                    });
+                                  },
                                 ),
                                 filled: true,
                                 fillColor: theme.colorScheme.surface,
@@ -275,7 +292,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                   borderSide: BorderSide.none,
                                 ),
                               ),
-                              obscureText: true,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your password';

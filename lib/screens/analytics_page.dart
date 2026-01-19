@@ -6,6 +6,7 @@ import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:lottie/lottie.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:mood_tracker/screens/user_guide_page.dart'; // Import Guide Page
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -27,7 +28,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mood Analytics')),
+      appBar: AppBar(
+        title: const Text('Mood Analytics'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'User Guide',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserGuidePage()),
+              );
+            },
+          ),
+        ],
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')

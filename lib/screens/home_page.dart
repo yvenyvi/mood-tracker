@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mood_tracker/widgets/daily_message_card.dart';
 import 'package:mood_tracker/widgets/mood_analytics_card.dart';
 import 'package:mood_tracker/widgets/calendar_card.dart';
+import 'package:mood_tracker/screens/user_guide_page.dart'; // Import Guide Page
 
 class HomePage extends StatefulWidget {
   final GlobalKey? welcomeKey;
@@ -109,6 +110,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               if (mounted) {
                 setState(() {});
               }
+            },
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(
+              Icons.help_outline,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            tooltip: 'User Guide',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserGuidePage()),
+              );
             },
           ),
           const SizedBox(width: 8),
