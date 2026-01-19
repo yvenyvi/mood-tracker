@@ -122,6 +122,9 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
           final moodData = <DateTime, List<Map<String, dynamic>>>{};
           for (var doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
+            // Add ID to data for edit/delete operations
+            data['id'] = doc.id;
+
             final timestamp = AppDateUtils.getDateTime(data['timestamp']);
             final date = DateTime(
               timestamp.year,

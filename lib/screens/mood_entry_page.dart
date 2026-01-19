@@ -5,9 +5,13 @@ import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/services/auth_service.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:mood_tracker/screens/user_guide_page.dart';
+import 'package:mood_tracker/utils/app_date_utils.dart';
 
 class MoodEntryPage extends StatefulWidget {
-  const MoodEntryPage({super.key});
+  final Map<String, dynamic>? existingEntry;
+  final String? entryId;
+
+  const MoodEntryPage({super.key, this.existingEntry, this.entryId});
 
   @override
   State<MoodEntryPage> createState() => _MoodEntryPageState();
@@ -20,13 +24,6 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   final _symptomController = TextEditingController();
   final _emotionController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    // Initialize prompt
-    _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
-  }
-
   String _selectedMood = 'Neutral'; // Default category
   String _currentPrompt = '';
   bool _isSaving = false;
@@ -36,7 +33,50 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   final Set<String> _selectedCopingStrategies = {};
   final Set<String> _selectedSymptoms = {};
 
-  // Map categories to approximate intensity (1-5) for backward compatibility/analytics
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingEntry != null) {
+      _initializeExistingData();
+    } else {
+      _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
+    }
+  }
+
+  void _initializeExistingData() {
+    final data = widget.existingEntry!;
+    _selectedMood = data['mood'] ?? 'Neutral';
+    _currentPrompt = MoodAssets.getAdaptivePrompt(_selectedMood);
+
+    _noteController.text = data['note'] ?? '';
+
+    // Initialize collections
+    if (data['triggers'] != null) {
+      _selectedTriggers.addAll(List<String>.from(data['triggers']));
+    } else if (data['trigger'] != null) {
+      // Legacy support
+      final String legacyTrigger = data['trigger'];
+      if (legacyTrigger.isNotEmpty) {
+        _selectedTriggers.addAll(
+          legacyTrigger.split(', ').map((e) => e.trim()),
+        );
+      }
+    }
+
+    if (data['emotions'] != null) {
+      _selectedEmotions.addAll(List<String>.from(data['emotions']));
+    }
+
+    if (data['coping_strategies'] != null) {
+      _selectedCopingStrategies.addAll(
+        List<String>.from(data['coping_strategies']),
+      );
+    }
+
+    if (data['physical_symptoms'] != null) {
+      _selectedSymptoms.addAll(List<String>.from(data['physical_symptoms']));
+    }
+  }
 
   @override
   void dispose() {
@@ -158,42 +198,63 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
       ]);
 
       final List<String> allTriggers = List.from(_selectedTriggers);
+      final moodData = {
+        'intensity': MoodAssets.getIntensity(_selectedMood),
+        'mood': _selectedMood,
+        'note': _noteController.text.trim(),
+        'trigger': allTriggers.join(', '), // Legacy support
+        'triggers': allTriggers, // New list format
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('moods')
-          .add({
-            'intensity': MoodAssets.getIntensity(_selectedMood),
-            'mood': _selectedMood,
-            'note': _noteController.text.trim(),
-            'trigger': allTriggers.join(', '), // Legacy support
-            'triggers': allTriggers, // New list format
+        'emotions': _selectedEmotions.toList(),
+        'coping_strategies': _selectedCopingStrategies.toList(),
+        'physical_symptoms': _selectedSymptoms.toList(),
+        'timestamp': widget.existingEntry != null
+            ? widget.existingEntry!['timestamp'] // Keep original timestamp
+            : DateTime.now(),
+        // Add updated_at if editing
+        if (widget.entryId != null) 'updated_at': DateTime.now(),
+      };
 
-            'emotions': _selectedEmotions.toList(),
-            'coping_strategies': _selectedCopingStrategies.toList(),
-            'physical_symptoms': _selectedSymptoms.toList(),
-            'timestamp': DateTime.now(),
+      if (widget.entryId != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('moods')
+            .doc(widget.entryId)
+            .update(moodData);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Mood updated successfully!')),
+          );
+          Navigator.pop(context); // Return to history
+        }
+      } else {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('moods')
+            .add(moodData);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Mood saved successfully!')),
+          );
+          _noteController.clear();
+          _triggerController.clear();
+          _emotionController.clear();
+          _copingController.clear();
+          _symptomController.clear();
+          setState(() {
+            _selectedMood = 'Neutral';
+            _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
+
+            _selectedTriggers.clear();
+            _selectedEmotions.clear();
+            _selectedCopingStrategies.clear();
+            _selectedSymptoms.clear();
           });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Mood saved successfully!')),
-        );
-        _noteController.clear();
-        _triggerController.clear();
-        _emotionController.clear();
-        _copingController.clear();
-        _symptomController.clear();
-        setState(() {
-          _selectedMood = 'Neutral';
-          _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
-
-          _selectedTriggers.clear();
-          _selectedEmotions.clear();
-          _selectedCopingStrategies.clear();
-          _selectedSymptoms.clear();
-        });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -238,7 +299,23 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
               style: Theme.of(context).textTheme.headlineMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
+            Text(
+              AppDateUtils.formatFullDate(
+                widget.existingEntry != null
+                    ? AppDateUtils.getDateTime(
+                        widget.existingEntry!['timestamp'],
+                      )
+                    : DateTime.now(),
+              ),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
             _buildSectionHeaderWithTooltip(
               context,
               'How are you feeling right now?',
