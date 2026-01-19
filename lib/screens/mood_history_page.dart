@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/widgets/mood_details_sheet.dart';
+import 'package:mood_tracker/screens/user_guide_page.dart';
 
 class MoodHistoryPage extends StatefulWidget {
   final DateTime? selectedMonth;
@@ -64,6 +65,18 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
           ],
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'User Guide',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserGuidePage()),
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -109,6 +122,9 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
           final moodData = <DateTime, List<Map<String, dynamic>>>{};
           for (var doc in snapshot.data!.docs) {
             final data = doc.data() as Map<String, dynamic>;
+            // Add ID to data for edit/delete operations
+            data['id'] = doc.id;
+
             final timestamp = AppDateUtils.getDateTime(data['timestamp']);
             final date = DateTime(
               timestamp.year,

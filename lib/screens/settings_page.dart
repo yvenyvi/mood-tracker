@@ -26,6 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _loadSettings();
+    _loadSettings();
   }
 
   Future<void> _loadSettings() async {

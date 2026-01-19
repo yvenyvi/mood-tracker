@@ -4,6 +4,9 @@ import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:mood_tracker/utils/app_date_utils.dart';
 import 'package:mood_tracker/widgets/detail_section.dart';
 import 'package:mood_tracker/widgets/mood_tag_wrap.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mood_tracker/screens/mood_entry_page.dart';
 
 class SingleEntryDetailSheet extends StatelessWidget {
   final Map<String, dynamic> entry;
@@ -34,6 +37,18 @@ class SingleEntryDetailSheet extends StatelessWidget {
             centerTitle: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Edit Entry',
+                onPressed: () => _editEntry(context),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                tooltip: 'Delete Entry',
+                onPressed: () => _deleteEntry(context),
+              ),
+            ],
           ),
           body: SafeArea(
             top: false,
@@ -199,5 +214,70 @@ class SingleEntryDetailSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _editEntry(BuildContext context) {
+    if (entry['id'] == null) return;
+
+    Navigator.pop(context); // Close sheet
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            MoodEntryPage(existingEntry: entry, entryId: entry['id']),
+      ),
+    );
+  }
+
+  Future<void> _deleteEntry(BuildContext context) async {
+    if (entry['id'] == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Entry?'),
+        content: const Text(
+          'This action cannot be undone. This mood log will be permanently deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('moods')
+            .doc(entry['id'])
+            .delete();
+
+        if (context.mounted) {
+          Navigator.pop(context); // Close sheet
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Entry deleted successfully.')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+        }
+      }
+    }
   }
 }

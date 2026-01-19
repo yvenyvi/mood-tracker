@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mood_tracker/widgets/daily_message_card.dart';
 import 'package:mood_tracker/widgets/mood_analytics_card.dart';
 import 'package:mood_tracker/widgets/calendar_card.dart';
+import 'package:mood_tracker/screens/user_guide_page.dart'; // Import Guide Page
 
 class HomePage extends StatefulWidget {
   final GlobalKey? welcomeKey;
@@ -112,6 +113,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             },
           ),
           const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(
+              Icons.help_outline,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            tooltip: 'User Guide',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserGuidePage()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
@@ -191,6 +206,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               style: TextStyle(color: colorScheme.onSecondary.withAlpha(179)),
             ),
           ),
+          // IMPORTANT: Emergency Support First
+          ListTile(
+            leading: Icon(
+              Icons.emergency_outlined,
+              color: AppTheme.blossomPink,
+            ),
+            title: Text(
+              'Emergency Support',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              _showEmergencyHotlinesDialog(context);
+            },
+          ),
+          Divider(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+          // Core Navigation
           ListTile(
             leading: Icon(Icons.person_outline, color: colorScheme.onSurface),
             title: Text(
@@ -198,7 +233,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               style: TextStyle(color: colorScheme.onSurface),
             ),
             onTap: () {
-              Navigator.pop(context); // Close drawer
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ProfilePage()),
@@ -222,23 +257,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               );
             },
           ),
-          ListTile(
-            leading: Icon(
-              Icons.emergency_outlined,
-              color: AppTheme.blossomPink, // Use our theme color
-            ),
-            title: Text(
-              'Emergency Support',
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            onTap: () {
-              Navigator.pop(context); // Close drawer
-              _showEmergencyHotlinesDialog(context);
-            },
-          ),
+          // Info & Tools
           ListTile(
             leading: Icon(Icons.info_outline, color: colorScheme.onSurface),
             title: Text(
@@ -246,7 +265,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               style: TextStyle(color: colorScheme.onSurface),
             ),
             onTap: () {
-              Navigator.pop(context); // Close drawer
+              Navigator.pop(context);
               _showAboutDialog(context);
             },
           ),
