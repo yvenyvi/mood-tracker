@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:mood_tracker/screens/main_screen.dart';
-import 'package:mood_tracker/services/notification_service.dart';
 import 'package:mood_tracker/screens/lock_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,7 +20,6 @@ void main() async {
   } catch (e) {
     debugPrint("Firebase initialization failed: $e");
   }
-  await NotificationService().init();
   runApp(
     MultiProvider(
       providers: [
