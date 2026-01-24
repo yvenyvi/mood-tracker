@@ -103,6 +103,12 @@ class MoodDetailsSheet extends StatelessWidget {
                             width: 36,
                             height: 36,
                             animate: false,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Text(
+                                MoodAssets.getFallbackEmoji(mood),
+                                style: const TextStyle(fontSize: 24),
+                              );
+                            },
                           ),
                           const SizedBox(width: 12),
                           Expanded(

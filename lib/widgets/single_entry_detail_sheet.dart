@@ -81,6 +81,12 @@ class SingleEntryDetailSheet extends StatelessWidget {
                         width: 140, // Slightly larger
                         height: 140,
                         animate: true,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Text(
+                            MoodAssets.getFallbackEmoji(mood),
+                            style: const TextStyle(fontSize: 80),
+                          );
+                        },
                       ),
                     ),
                   ),

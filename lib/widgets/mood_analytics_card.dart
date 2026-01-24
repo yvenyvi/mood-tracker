@@ -164,6 +164,12 @@ class MoodAnalyticsCard extends StatelessWidget {
                       width: 40,
                       height: 40,
                       animate: true,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Text(
+                          MoodAssets.getFallbackEmoji(mostCommonMood),
+                          style: const TextStyle(fontSize: 24),
+                        );
+                      },
                     ),
                     AppColors.pastelGreen,
                   ),

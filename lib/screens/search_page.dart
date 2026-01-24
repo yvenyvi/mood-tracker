@@ -420,8 +420,10 @@ class _SearchPageState extends State<SearchPage> {
                       width: 32,
                       height: 32,
                       animate: false,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(Icons.mood, color: moodColor, size: 24),
+                      errorBuilder: (context, error, stackTrace) => Text(
+                        MoodAssets.getFallbackEmoji(mood),
+                        style: const TextStyle(fontSize: 24),
+                      ),
                     ),
                   ),
                 ),

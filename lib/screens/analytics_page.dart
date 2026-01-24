@@ -425,7 +425,38 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               children: [
                 Icon(icon, color: color, size: 24),
                 if (lottieUrl != null)
-                  Lottie.network(lottieUrl, width: 30, height: 30),
+                  Lottie.network(
+                    lottieUrl,
+                    width: 30,
+                    height: 30,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Extract mood from url if possible or just use a generic one?
+                      // Actually this widget doesn't know the mood name directly, but it's used for Top Mood.
+                      // The value (topMood) is passed as 'value' but that is the displayed text.
+                      // Wait, _buildSummaryCard takes 'lottieUrl' as nullable String.
+                      // But it doesn't take 'moodName'.
+                      // However, in the usage at line 128:
+                      // MoodAssets.getCategoryUrl(topMood) is passed.
+                      // I should pass the mood name to _buildSummaryCard instead or in addition to be safe?
+                      // Or I can infer it? No, inference is risky.
+                      // Better to pass 'mood' as an optional parameter if needed?
+                      // Or just show a generic icon?
+                      // But the requirement is "offline emoji's".
+                      // I will modify _buildSummaryCard to accept specific mood name or rely on passed icon if lottie fails?
+                      // Actually, let's look at the usage.
+                      // Usage: _buildSummaryCard(..., topMood, ..., MoodAssets.getCategoryUrl(topMood))
+                      // So 'value' IS the mood name for Top Mood card.
+                      // For other cards, 'value' is "5 days" or "3.5".
+                      // So I can check if 'title' is 'Top Mood'.
+                      if (title == 'Top Mood') {
+                        return Text(
+                          MoodAssets.getFallbackEmoji(value),
+                          style: const TextStyle(fontSize: 20),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
               ],
             ),
             const SizedBox(height: 8),

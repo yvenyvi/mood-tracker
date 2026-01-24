@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mood_tracker/theme/app_theme.dart';
 import 'package:mood_tracker/screens/mood_entry_page.dart';
@@ -24,11 +25,24 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isOffline = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _checkInternet();
+  }
+
+  Future<void> _checkInternet() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        if (mounted && _isOffline) setState(() => _isOffline = false);
+      }
+    } on SocketException catch (_) {
+      if (mounted && !_isOffline) setState(() => _isOffline = true);
+    }
   }
 
   @override
@@ -42,6 +56,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed && mounted) {
       // Rebuild to update DateTime.now() references in UI
       setState(() {});
+      _checkInternet();
     }
   }
 
@@ -83,6 +98,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
           ),
         ),
+
         actions: [
           IconButton(
             icon: Icon(
@@ -128,10 +144,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ),
           const SizedBox(width: 8),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: Theme.of(context).dividerColor, height: 1.0),
-        ),
+        bottom: _isOffline
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(30),
+                child: Container(
+                  width: double.infinity,
+                  color: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: const Text(
+                    'You are offline. Logs will be synced later.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              )
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(1.0),
+                child: Container(
+                  color: Theme.of(context).dividerColor,
+                  height: 1.0,
+                ),
+              ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

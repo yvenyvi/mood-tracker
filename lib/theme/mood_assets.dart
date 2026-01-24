@@ -197,4 +197,24 @@ class MoodAssets {
 
     return prompts[random.nextInt(prompts.length)];
   }
+
+  static const Map<String, String> offlineEmojis = {
+    'Happy': '😊',
+    'Sad': '😢',
+    'Neutral': '😐',
+    'Angry': '😡',
+    'Anxious': '😰',
+    'Stress': '🤯',
+    'Excited': '🤩',
+    'Tired': '😴',
+    'I Don\'t Know': '🤔',
+  };
+
+  static String getFallbackEmoji(String category) {
+    // Capitalize first letter to match keys
+    final capitalized = category.isNotEmpty
+        ? '${category[0].toUpperCase()}${category.substring(1).toLowerCase()}'
+        : category;
+    return offlineEmojis[capitalized] ?? '😐';
+  }
 }

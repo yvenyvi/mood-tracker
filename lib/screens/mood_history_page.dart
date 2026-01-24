@@ -250,6 +250,15 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                                       width: 28,
                                       height: 28,
                                       animate: false,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Text(
+                                              MoodAssets.getFallbackEmoji(mood),
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              ),
+                                            );
+                                          },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
