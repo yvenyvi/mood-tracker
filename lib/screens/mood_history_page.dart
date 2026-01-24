@@ -151,6 +151,7 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
               // For simplicity, let's use the latest (first in list)
               final mainEntry = entries.first;
               final mood = mainEntry['mood'] ?? 'Neutral';
+              final isUnresolved = mood == "I Don't Know";
 
               final color = MoodAssets.getMoodColor(mood);
               final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -226,12 +227,14 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                               alpha: isDark ? 0.15 : 0.08,
                             ),
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: color.withValues(
-                                alpha: isDark ? 0.3 : 0.5,
-                              ), // Darker border for light mode
-                              width: 1,
-                            ),
+                            border: isUnresolved
+                                ? Border.all(color: color, width: 2)
+                                : Border.all(
+                                    color: color.withValues(
+                                      alpha: isDark ? 0.3 : 0.5,
+                                    ), // Darker border for light mode
+                                    width: 1,
+                                  ),
                           ),
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -250,6 +253,15 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                                       width: 28,
                                       height: 28,
                                       animate: false,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Text(
+                                              MoodAssets.getFallbackEmoji(mood),
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              ),
+                                            );
+                                          },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -266,21 +278,45 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                                             color: color,
                                           ),
                                         ),
-                                        Text(
-                                          MoodAssets
-                                                  .moodLabels[mainEntry['intensity']
-                                                      as int? ??
-                                                  3] ??
-                                              (mainEntry['intensity'] == 0
-                                                  ? 'Unsure'
-                                                  : 'Unknown'),
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              mood,
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                              ),
+                                            ),
+                                            if (mainEntry['intensity'] !=
+                                                0) ...[
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: color.withValues(
+                                                    alpha: 0.2,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  "Lvl ${mainEntry['intensity']}",
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: color,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -292,6 +328,31 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                                   ),
                                 ],
                               ),
+                              if (isUnresolved)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 8.0,
+                                    bottom: 4.0,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.edit_note,
+                                        size: 14,
+                                        color: color,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "Tap to Reflect",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: color,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               Builder(
                                 builder: (context) {
                                   String triggerText = '';

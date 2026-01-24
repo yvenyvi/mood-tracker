@@ -4,6 +4,9 @@ import 'package:mood_tracker/screens/mood_history_page.dart';
 import 'package:mood_tracker/screens/analytics_page.dart';
 import 'package:mood_tracker/utils/app_tutorial.dart';
 import 'package:mood_tracker/screens/mood_entry_page.dart';
+import 'package:provider/provider.dart';
+import 'package:mood_tracker/providers/comfort_provider.dart';
+import 'package:mood_tracker/screens/comfort_view.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -48,6 +51,12 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Global Safety Net Check
+    final isComfortMode = context.watch<ComfortProvider>().isEnabled;
+    if (isComfortMode) {
+      return const ComfortView();
+    }
+
     final List<Widget> pages = [
       HomePage(welcomeKey: _welcomeKey),
       const AnalyticsPage(),

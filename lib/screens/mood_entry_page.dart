@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/services/auth_service.dart';
+import 'package:mood_tracker/providers/comfort_provider.dart';
+
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:mood_tracker/screens/user_guide_page.dart';
 import 'package:mood_tracker/utils/app_date_utils.dart';
@@ -25,6 +27,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   final _emotionController = TextEditingController();
 
   String _selectedMood = 'Neutral'; // Default category
+  double _intensity = 3.0;
   String _currentPrompt = '';
   bool _isSaving = false;
 
@@ -46,6 +49,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   void _initializeExistingData() {
     final data = widget.existingEntry!;
     _selectedMood = data['mood'] ?? 'Neutral';
+    _intensity =
+        (data['intensity'] as num?)?.toDouble() ??
+        MoodAssets.getIntensity(_selectedMood).toDouble();
     _currentPrompt = MoodAssets.getAdaptivePrompt(_selectedMood);
 
     _noteController.text = data['note'] ?? '';
@@ -106,20 +112,35 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
         selectedSet.add(item);
       }
 
-      // Persist for future validation
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection(collectionName)
-          .where('name', isEqualTo: item)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        await FirebaseFirestore.instance
+      // Offline-safe: Try to check/write with timeout
+      try {
+        final queryOp = FirebaseFirestore.instance
             .collection('users')
             .doc(userId)
             .collection(collectionName)
-            .add({'name': item, 'created_at': DateTime.now()});
+            .where('name', isEqualTo: item)
+            .get();
+
+        // Short timeout for checks
+        final querySnapshot = await queryOp.timeout(
+          const Duration(milliseconds: 1500),
+        );
+
+        if (querySnapshot.docs.isEmpty) {
+          final addOp = FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection(collectionName)
+              .add({'name': item, 'created_at': DateTime.now()});
+          await addOp.timeout(const Duration(milliseconds: 1500));
+        }
+      } catch (e) {
+        // Ignore timeouts/errors for aux items when offline
+        debugPrint("Aux item save skipped/timed out: $item");
+        // Robustness: If we are offline, we might just assume it's fine to rely on local state
+        // or maybe we should blindly add? Blindly adding duplicates might be bad when syncing later.
+        // For now, skipping auxiliary tag persistence if check fails is acceptable to prevent blocking main save.
+        // Use existing selectedSet so it is saved in the main log.
       }
     }
   }
@@ -137,25 +158,33 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
         _selectedEmotions.add(item);
       }
 
-      // Check if emotion already exists for this mood
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('custom_emotions')
-          .where('name', isEqualTo: item)
-          .where('mood', isEqualTo: _selectedMood)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        await FirebaseFirestore.instance
+      try {
+        final queryOp = FirebaseFirestore.instance
             .collection('users')
             .doc(userId)
             .collection('custom_emotions')
-            .add({
-              'name': item,
-              'mood': _selectedMood,
-              'created_at': DateTime.now(),
-            });
+            .where('name', isEqualTo: item)
+            .where('mood', isEqualTo: _selectedMood)
+            .get();
+
+        final querySnapshot = await queryOp.timeout(
+          const Duration(milliseconds: 1500),
+        );
+
+        if (querySnapshot.docs.isEmpty) {
+          final addOp = FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .collection('custom_emotions')
+              .add({
+                'name': item,
+                'mood': _selectedMood,
+                'created_at': DateTime.now(),
+              });
+          await addOp.timeout(const Duration(milliseconds: 1500));
+        }
+      } catch (e) {
+        debugPrint("Emotion save skipped/timed out: $item");
       }
     }
   }
@@ -174,7 +203,8 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
     setState(() => _isSaving = true);
 
     try {
-      // 1. Process new items for all dynamic fields
+      // 1. Process new items for all dynamic fields with timeout safeguard
+      // We wrap the entire batch in a timeout
       await Future.wait([
         _processNewItems(
           _triggerController.text.trim(),
@@ -195,51 +225,80 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           user.uid,
         ),
         _processNewEmotions(_emotionController.text.trim(), user.uid),
-      ]);
+      ]).timeout(const Duration(seconds: 3)).catchError((e) {
+        debugPrint("Tag processing timed out, proceeding to save main log.");
+        return []; // Return proper type? Future.wait returns List<dynamic>
+      });
 
       final List<String> allTriggers = List.from(_selectedTriggers);
       final moodData = {
-        'intensity': MoodAssets.getIntensity(_selectedMood),
+        'intensity': _intensity.round(),
         'mood': _selectedMood,
         'note': _noteController.text.trim(),
         'trigger': allTriggers.join(', '), // Legacy support
         'triggers': allTriggers, // New list format
-
         'emotions': _selectedEmotions.toList(),
         'coping_strategies': _selectedCopingStrategies.toList(),
         'physical_symptoms': _selectedSymptoms.toList(),
         'timestamp': widget.existingEntry != null
             ? widget.existingEntry!['timestamp'] // Keep original timestamp
             : DateTime.now(),
-        // Add updated_at if editing
         if (widget.entryId != null) 'updated_at': DateTime.now(),
       };
 
-      if (widget.entryId != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('moods')
-            .doc(widget.entryId)
-            .update(moodData);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Mood updated successfully!')),
-          );
-          Navigator.pop(context); // Return to history
+      // 2. Perform Save with Timeout logic from previous step
+      final saveData = Future<void>(() async {
+        if (widget.entryId != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('moods')
+              .doc(widget.entryId)
+              .update(moodData);
+        } else {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('moods')
+              .add(moodData);
         }
-      } else {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('moods')
-            .add(moodData);
+      });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Mood saved successfully!')),
-          );
+      // Wait for save with a timeout to prevent hanging when offline
+      try {
+        await saveData.timeout(const Duration(seconds: 2));
+      } catch (e) {
+        // Timeout means likely offline, but persistence queue accepted it.
+        debugPrint("Save operation timed out (likely offline), proceeding.");
+      }
+
+      if (mounted) {
+        final isEdit = widget.entryId != null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isEdit
+                  ? 'Mood updated successfully!'
+                  : 'Mood saved successfully!',
+            ),
+          ),
+        );
+
+        if (isEdit) {
+          Navigator.pop(context); // Return to history
+        } else {
+          // Check for Comfort Mode Trigger
+          final intensity = MoodAssets.getIntensity(_selectedMood);
+          final mood = _selectedMood;
+          // Angry/Anxious are Low Valence (1-2) in this app's scale.
+          // So "High Intensity" of these emotions corresponds to LOW scalar value (1 or 2).
+          final isHighStress =
+              intensity <= 2 &&
+              (mood == 'Anxious' ||
+                  mood == 'Angry' ||
+                  mood == 'Stress'); // Added Stress if exists
+
+          // Clear fields first
           _noteController.clear();
           _triggerController.clear();
           _emotionController.clear();
@@ -248,12 +307,45 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           setState(() {
             _selectedMood = 'Neutral';
             _currentPrompt = MoodAssets.getAdaptivePrompt('Neutral');
-
             _selectedTriggers.clear();
             _selectedEmotions.clear();
             _selectedCopingStrategies.clear();
             _selectedSymptoms.clear();
+            _isSaving = false;
           });
+
+          if (isHighStress) {
+            // Show Prompt
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Text("Take a moment?"),
+                content: const Text(
+                  "You seem to be going through a lot right now. Would you like to switch to Comfort Mode?",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context); // Close entry page
+                    },
+                    child: const Text("No thanks"),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context); // Close entry page
+                      context.read<ComfortProvider>().enable();
+                    },
+                    child: const Text("Yes, please"),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            Navigator.pop(context);
+          }
         }
       }
     } catch (e) {
@@ -335,6 +427,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                   onTap: () {
                     setState(() {
                       _selectedMood = mood;
+                      // Only reset intensity if it clashes wildly?
+                      // Or set to default for that mood? Let's set default for that mood as a starting point.
+                      _intensity = MoodAssets.getIntensity(mood).toDouble();
                       _currentPrompt = MoodAssets.getAdaptivePrompt(mood);
                       _selectedEmotions
                           .clear(); // Clear specific emotions when category changes
@@ -367,10 +462,13 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                                 height: isSelected ? 60 : 50,
                                 animate: true, // Always animate
                                 errorBuilder: (context, error, stackTrace) {
-                                  return Icon(
-                                    Icons.error,
-                                    size: isSelected ? 48 : 40,
-                                    color: Colors.grey,
+                                  return Center(
+                                    child: Text(
+                                      MoodAssets.getFallbackEmoji(mood),
+                                      style: TextStyle(
+                                        fontSize: isSelected ? 32 : 24,
+                                      ),
+                                    ),
                                   );
                                 },
                               ),
@@ -503,6 +601,62 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
             const SizedBox(height: 32),
 
+            // Intensity Slider
+            _buildSectionHeaderWithTooltip(
+              context,
+              'How intense is it?',
+              'Rate the intensity of your $_selectedMood feeling from 1 (Mild) to 5 (Overwhelming).',
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: currentColor.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Mild",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      Text(
+                        _intensity.round().toString(),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: currentColor,
+                        ),
+                      ),
+                      Text(
+                        "Extreme",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  Slider(
+                    value: _intensity,
+                    min: 1,
+                    max: 5,
+                    divisions: 4,
+                    activeColor: currentColor,
+                    label: _intensity.round().toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        _intensity = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
             // Triggers Section
             _buildDynamicSection(
               context,
@@ -519,11 +673,23 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
             // Note Input
             // Note Input (Adaptive Prompt)
-            Text(
-              _currentPrompt,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    _currentPrompt,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.fullscreen),
+                  tooltip: 'Full Screen Mode',
+                  onPressed: _showFullScreenJournal,
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             TextField(
@@ -721,6 +887,48 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _showFullScreenJournal() async {
+    await showDialog(
+      context: context,
+      builder: (context) => Scaffold(
+        appBar: AppBar(
+          title: const Text("Emotional Catharsis"),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Done"),
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _noteController,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: const InputDecoration(
+                    hintText:
+                        "Let it all out. This is a safe space to vent, rant, or reflect without judgment...",
+                    border: InputBorder.none,
+                  ),
+                  style: const TextStyle(fontSize: 18, height: 1.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

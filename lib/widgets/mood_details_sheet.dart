@@ -62,8 +62,7 @@ class MoodDetailsSheet extends StatelessWidget {
 
                 // Determine summary text (Trigger > Note > Intensity)
                 String summary =
-                    MoodAssets.moodLabels[moodData['intensity'] as int? ?? 3] ??
-                    '';
+                    'Intensity Level ${moodData['intensity'] as int? ?? 3}';
                 if (moodData['trigger'] != null &&
                     (moodData['trigger'] as String).isNotEmpty) {
                   summary = 'Trigger: ${moodData['trigger']}';
@@ -103,6 +102,12 @@ class MoodDetailsSheet extends StatelessWidget {
                             width: 36,
                             height: 36,
                             animate: false,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Text(
+                                MoodAssets.getFallbackEmoji(mood),
+                                style: const TextStyle(fontSize: 24),
+                              );
+                            },
                           ),
                           const SizedBox(width: 12),
                           Expanded(

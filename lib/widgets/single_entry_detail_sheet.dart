@@ -81,6 +81,12 @@ class SingleEntryDetailSheet extends StatelessWidget {
                         width: 140, // Slightly larger
                         height: 140,
                         animate: true,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Text(
+                            MoodAssets.getFallbackEmoji(mood),
+                            style: const TextStyle(fontSize: 80),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -97,8 +103,7 @@ class SingleEntryDetailSheet extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   Text(
-                    MoodAssets.moodLabels[intensity] ??
-                        (intensity == 0 ? 'Unsure' : 'Unknown'),
+                    "Intensity Level $intensity",
                     style: TextStyle(
                       fontSize: 18,
                       color: color.withValues(alpha: 0.8),

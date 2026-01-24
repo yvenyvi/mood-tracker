@@ -280,7 +280,17 @@ class UserGuidePage extends StatelessWidget {
                       ),
                     ),
                   )
-                : Lottie.network(MoodAssets.getCategoryUrl(lottieCategory)),
+                : Lottie.network(
+                    MoodAssets.getCategoryUrl(lottieCategory),
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Text(
+                          MoodAssets.getFallbackEmoji(lottieCategory),
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      );
+                    },
+                  ),
           ),
           const SizedBox(width: 16),
           Expanded(
