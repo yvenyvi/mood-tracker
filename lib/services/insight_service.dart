@@ -130,6 +130,117 @@ class InsightService {
       }
     }
 
+    // 4. Weekend Lift (Better mood on weekends)
+    final weekendEntries = entries.where((e) {
+      final dt = AppDateUtils.getDateTime(e['timestamp']);
+      return dt.weekday == 6 || dt.weekday == 7; // Sat or Sun
+    }).toList();
+
+    final weekdayEntries = entries.where((e) {
+      final dt = AppDateUtils.getDateTime(e['timestamp']);
+      return dt.weekday >= 1 && dt.weekday <= 5;
+    }).toList();
+
+    if (weekendEntries.length >= 3 && weekdayEntries.length >= 5) {
+      double weekendSum = 0;
+      for (var e in weekendEntries) {
+        weekendSum += (e['intensity'] as num?)?.toDouble() ?? 3.0;
+      }
+      double weekdaySum = 0;
+      for (var e in weekdayEntries) {
+        weekdaySum += (e['intensity'] as num?)?.toDouble() ?? 3.0;
+      }
+
+      final weekendAvg = weekendSum / weekendEntries.length;
+      final weekdayAvg = weekdaySum / weekdayEntries.length;
+
+      if (weekendAvg > (weekdayAvg + 1.0)) {
+        // Significant difference
+        insights.add({
+          'type': 'pattern',
+          'title': 'The Weekend Lift',
+          'description':
+              "Your mood is significantly higher on weekends compared to weekdays.",
+          'trigger': null, // Time based
+          'coping_tip':
+              "What specifically about your weekends brings you joy? Try to bring one small piece of that into your Tuesday.",
+          'related_entries': weekendEntries,
+        });
+      }
+    }
+
+    // 5. Evening Crash (Low mood after 8 PM)
+    final eveningEntries = entries.where((e) {
+      final dt = AppDateUtils.getDateTime(e['timestamp']);
+      return dt.hour >= 20; // 8 PM onwards
+    }).toList();
+
+    if (eveningEntries.length >= 3) {
+      int lowCount = 0;
+      for (var e in eveningEntries) {
+        final intensity = (e['intensity'] as num?)?.toDouble() ?? 3.0;
+        if (intensity <= 2) lowCount++;
+      }
+
+      if (lowCount >= (eveningEntries.length * 0.6)) {
+        insights.add({
+          'type': 'pattern',
+          'title': 'Evening Energy Dip',
+          'description':
+              "You tend to feel lower energy or mood in the late evenings (after 8 PM).",
+          'trigger': null,
+          'coping_tip':
+              "This might be a sign of fatigue. Consider an earlier wind-down routine.",
+          'related_entries': eveningEntries,
+        });
+      }
+    }
+
+    // 6. Social Battery (Social triggers leading to Tired/Drained)
+    // We look for 'Social' or 'Family' or 'Friends' in triggers
+    final socialKeywords = [
+      'Social',
+      'Family',
+      'Friends',
+      'Party',
+      'Gathering',
+      'Meeting',
+      'Date',
+    ];
+    final socialEntries = entries.where((e) {
+      final triggers = _getTriggers(e);
+      return triggers.any((t) => socialKeywords.any((k) => t.contains(k)));
+    }).toList();
+
+    if (socialEntries.length >= 3) {
+      int drainedCount = 0;
+      for (var e in socialEntries) {
+        final mood = e['mood'] as String? ?? '';
+        final emotions =
+            (e['emotions'] as List?)?.map((e) => e.toString()).toList() ?? [];
+
+        if (mood == 'Tired' ||
+            emotions.contains('Drained') ||
+            emotions.contains('Exhausted') ||
+            emotions.contains('Overwhelmed')) {
+          drainedCount++;
+        }
+      }
+
+      if (drainedCount >= (socialEntries.length * 0.5)) {
+        insights.add({
+          'type': 'pattern',
+          'title': 'Social Battery Check',
+          'description':
+              "Social activities seem to often leave you feeling tired or drained.",
+          'trigger': 'Social Activity',
+          'coping_tip':
+              "It's okay to set boundaries. Try shorter social engagements or scheduled quiet time after.",
+          'related_entries': socialEntries,
+        });
+      }
+    }
+
     // 4. Default: Daily Wisdom (if no specific patterns found yet)
     if (insights.isEmpty && entries.isNotEmpty) {
       // Import strictly needed here or at top? using dynamic for now or standard import

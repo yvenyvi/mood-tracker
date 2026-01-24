@@ -103,8 +103,7 @@ class SingleEntryDetailSheet extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   Text(
-                    MoodAssets.moodLabels[intensity] ??
-                        (intensity == 0 ? 'Unsure' : 'Unknown'),
+                    "Intensity Level $intensity",
                     style: TextStyle(
                       fontSize: 18,
                       color: color.withValues(alpha: 0.8),

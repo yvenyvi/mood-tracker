@@ -278,21 +278,45 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                                             color: color,
                                           ),
                                         ),
-                                        Text(
-                                          MoodAssets
-                                                  .moodLabels[mainEntry['intensity']
-                                                      as int? ??
-                                                  3] ??
-                                              (mainEntry['intensity'] == 0
-                                                  ? 'Unsure'
-                                                  : 'Unknown'),
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              mood,
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                              ),
+                                            ),
+                                            if (mainEntry['intensity'] !=
+                                                0) ...[
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: color.withValues(
+                                                    alpha: 0.2,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  "Lvl ${mainEntry['intensity']}",
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: color,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                       ],
                                     ),

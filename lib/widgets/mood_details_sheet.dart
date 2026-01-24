@@ -62,8 +62,7 @@ class MoodDetailsSheet extends StatelessWidget {
 
                 // Determine summary text (Trigger > Note > Intensity)
                 String summary =
-                    MoodAssets.moodLabels[moodData['intensity'] as int? ?? 3] ??
-                    '';
+                    'Intensity Level ${moodData['intensity'] as int? ?? 3}';
                 if (moodData['trigger'] != null &&
                     (moodData['trigger'] as String).isNotEmpty) {
                   summary = 'Trigger: ${moodData['trigger']}';
