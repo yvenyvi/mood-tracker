@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 import 'package:mood_tracker/services/auth_service.dart';
+import 'package:mood_tracker/providers/comfort_provider.dart';
+
 import 'package:mood_tracker/theme/mood_assets.dart';
 import 'package:mood_tracker/screens/user_guide_page.dart';
 import 'package:mood_tracker/utils/app_date_utils.dart';
@@ -281,7 +283,18 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
         if (isEdit) {
           Navigator.pop(context); // Return to history
         } else {
-          // Reset fields
+          // Check for Comfort Mode Trigger
+          final intensity = MoodAssets.getIntensity(_selectedMood);
+          final mood = _selectedMood;
+          // Angry/Anxious are Low Valence (1-2) in this app's scale.
+          // So "High Intensity" of these emotions corresponds to LOW scalar value (1 or 2).
+          final isHighStress =
+              intensity <= 2 &&
+              (mood == 'Anxious' ||
+                  mood == 'Angry' ||
+                  mood == 'Stress'); // Added Stress if exists
+
+          // Clear fields first
           _noteController.clear();
           _triggerController.clear();
           _emotionController.clear();
@@ -296,13 +309,39 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
             _selectedSymptoms.clear();
             _isSaving = false;
           });
-          // Close screen as expected behavior for "Save" usually implies "Done"
-          // But existing behavior was "Stay and Reset".
-          // Given user complaints about "spinner indefinitely", "Stay and Reset" works ONLY if spinner stops.
-          // I'm setting _isSaving = false above.
-          // Actually, usually users expect to go back to Home after saving a mood entry.
-          // I will add Navigator.pop(context) to be consistent with good UX.
-          Navigator.pop(context);
+
+          if (isHighStress) {
+            // Show Prompt
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Text("Take a moment?"),
+                content: const Text(
+                  "You seem to be going through a lot right now. Would you like to switch to Comfort Mode?",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context); // Close entry page
+                    },
+                    child: const Text("No thanks"),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context); // Close entry page
+                      context.read<ComfortProvider>().enable();
+                    },
+                    child: const Text("Yes, please"),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            Navigator.pop(context);
+          }
         }
       }
     } catch (e) {

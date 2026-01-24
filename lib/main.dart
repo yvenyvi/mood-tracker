@@ -11,6 +11,8 @@ import 'package:mood_tracker/screens/main_screen.dart';
 import 'package:mood_tracker/screens/lock_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:mood_tracker/providers/comfort_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -29,6 +31,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ComfortProvider()),
       ],
       child: const EmoteApp(),
     ),

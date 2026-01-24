@@ -13,6 +13,7 @@ import 'package:mood_tracker/widgets/daily_message_card.dart';
 import 'package:mood_tracker/widgets/mood_analytics_card.dart';
 import 'package:mood_tracker/widgets/calendar_card.dart';
 import 'package:mood_tracker/screens/user_guide_page.dart'; // Import Guide Page
+import 'package:mood_tracker/providers/comfort_provider.dart';
 
 class HomePage extends StatefulWidget {
   final GlobalKey? welcomeKey;
@@ -100,6 +101,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
 
         actions: [
+          IconButton(
+            tooltip: "Comfort Mode",
+            icon: Icon(
+              Icons.spa,
+              color: Theme.of(context).colorScheme.primary, // Make it distinct
+            ),
+            onPressed: () {
+              context.read<ComfortProvider>().enable();
+            },
+          ),
           IconButton(
             icon: Icon(
               Icons.search,
