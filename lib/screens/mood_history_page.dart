@@ -151,6 +151,7 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
               // For simplicity, let's use the latest (first in list)
               final mainEntry = entries.first;
               final mood = mainEntry['mood'] ?? 'Neutral';
+              final isUnresolved = mood == "I Don't Know";
 
               final color = MoodAssets.getMoodColor(mood);
               final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -226,12 +227,14 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                               alpha: isDark ? 0.15 : 0.08,
                             ),
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: color.withValues(
-                                alpha: isDark ? 0.3 : 0.5,
-                              ), // Darker border for light mode
-                              width: 1,
-                            ),
+                            border: isUnresolved
+                                ? Border.all(color: color, width: 2)
+                                : Border.all(
+                                    color: color.withValues(
+                                      alpha: isDark ? 0.3 : 0.5,
+                                    ), // Darker border for light mode
+                                    width: 1,
+                                  ),
                           ),
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -301,6 +304,31 @@ class _MoodHistoryPageState extends State<MoodHistoryPage> {
                                   ),
                                 ],
                               ),
+                              if (isUnresolved)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 8.0,
+                                    bottom: 4.0,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.edit_note,
+                                        size: 14,
+                                        color: color,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "Tap to Reflect",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: color,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               Builder(
                                 builder: (context) {
                                   String triggerText = '';

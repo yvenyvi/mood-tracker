@@ -86,9 +86,49 @@ class InsightService {
       }
     }
 
-    // 3. Winning Streak / Positive Vibe (High intensity correlation)
-    // Similar to above but for high intensity
-    // Implementation can be expanded.
+    // 3. Physical Correlates (Symptom Patterns)
+    final symptomStats = <String, List<Map<String, dynamic>>>{};
+    for (var e in entries) {
+      if (e['physical_symptoms'] != null &&
+          (e['physical_symptoms'] as List).isNotEmpty) {
+        final symptoms = (e['physical_symptoms'] as List)
+            .map((s) => s.toString())
+            .toList();
+        for (var s in symptoms) {
+          if (!symptomStats.containsKey(s)) symptomStats[s] = [];
+          symptomStats[s]!.add(e);
+        }
+      }
+    }
+
+    // Check if any symptom is frequent (e.g. >= 2 times) and associated with low mood/high stress
+    for (var entry in symptomStats.entries) {
+      final symptom = entry.key;
+      final occurrences = entry.value;
+      if (occurrences.length >= 2) {
+        int lowMoodCount = 0;
+        for (var e in occurrences) {
+          final intensity = (e['intensity'] as num?)?.toDouble() ?? 3.0;
+          if (intensity <= 2) lowMoodCount++;
+        }
+
+        if (lowMoodCount >= (occurrences.length * 0.5)) {
+          // 50% correlation with low mood
+          insights.add({
+            'type': 'physical_correlation',
+            'title': 'Body & Mind Connection',
+            'description':
+                "You often report '$symptom' when you're feeling down or stressed.",
+            'trigger': symptom,
+            'coping_tip':
+                "Scanning your body for tension can be a good first step.",
+            'related_entries': occurrences,
+          });
+          // Break after finding one significant physical pattern to avoid clutter
+          break;
+        }
+      }
+    }
 
     // 4. Default: Daily Wisdom (if no specific patterns found yet)
     if (insights.isEmpty && entries.isNotEmpty) {

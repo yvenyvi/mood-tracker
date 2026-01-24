@@ -27,6 +27,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   final _emotionController = TextEditingController();
 
   String _selectedMood = 'Neutral'; // Default category
+  double _intensity = 3.0;
   String _currentPrompt = '';
   bool _isSaving = false;
 
@@ -48,6 +49,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
   void _initializeExistingData() {
     final data = widget.existingEntry!;
     _selectedMood = data['mood'] ?? 'Neutral';
+    _intensity =
+        (data['intensity'] as num?)?.toDouble() ??
+        MoodAssets.getIntensity(_selectedMood).toDouble();
     _currentPrompt = MoodAssets.getAdaptivePrompt(_selectedMood);
 
     _noteController.text = data['note'] ?? '';
@@ -228,7 +232,7 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
       final List<String> allTriggers = List.from(_selectedTriggers);
       final moodData = {
-        'intensity': MoodAssets.getIntensity(_selectedMood),
+        'intensity': _intensity.round(),
         'mood': _selectedMood,
         'note': _noteController.text.trim(),
         'trigger': allTriggers.join(', '), // Legacy support
@@ -423,6 +427,9 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
                   onTap: () {
                     setState(() {
                       _selectedMood = mood;
+                      // Only reset intensity if it clashes wildly?
+                      // Or set to default for that mood? Let's set default for that mood as a starting point.
+                      _intensity = MoodAssets.getIntensity(mood).toDouble();
                       _currentPrompt = MoodAssets.getAdaptivePrompt(mood);
                       _selectedEmotions
                           .clear(); // Clear specific emotions when category changes
@@ -594,6 +601,62 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
             const SizedBox(height: 32),
 
+            // Intensity Slider
+            _buildSectionHeaderWithTooltip(
+              context,
+              'How intense is it?',
+              'Rate the intensity of your $_selectedMood feeling from 1 (Mild) to 5 (Overwhelming).',
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: currentColor.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Mild",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                      Text(
+                        _intensity.round().toString(),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: currentColor,
+                        ),
+                      ),
+                      Text(
+                        "Extreme",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  Slider(
+                    value: _intensity,
+                    min: 1,
+                    max: 5,
+                    divisions: 4,
+                    activeColor: currentColor,
+                    label: _intensity.round().toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        _intensity = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
             // Triggers Section
             _buildDynamicSection(
               context,
@@ -610,11 +673,23 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
 
             // Note Input
             // Note Input (Adaptive Prompt)
-            Text(
-              _currentPrompt,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    _currentPrompt,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.fullscreen),
+                  tooltip: 'Full Screen Mode',
+                  onPressed: _showFullScreenJournal,
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             TextField(
@@ -812,6 +887,48 @@ class _MoodEntryPageState extends State<MoodEntryPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _showFullScreenJournal() async {
+    await showDialog(
+      context: context,
+      builder: (context) => Scaffold(
+        appBar: AppBar(
+          title: const Text("Emotional Catharsis"),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Done"),
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _noteController,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: const InputDecoration(
+                    hintText:
+                        "Let it all out. This is a safe space to vent, rant, or reflect without judgment...",
+                    border: InputBorder.none,
+                  ),
+                  style: const TextStyle(fontSize: 18, height: 1.5),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
