@@ -253,7 +253,7 @@ class InsightService {
         'description': randomMessage,
         'trigger': null,
         'coping_tip': null,
-        'related_entries': [],
+        'related_entries': <Map<String, dynamic>>[],
       });
     }
 
