@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Emote — Daily Mood Tracker & Emotional Sanctuary</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#a0a0a0",
+            "on-tertiary-container": "#fffbff",
+            "primary-fixed-dim": "#8c445c",
+            "tertiary": "#c49c5e",
+            "error": "#ffb4ab",
+            "tertiary-fixed": "#ffddb3",
+            "outline": "#8c8c8c",
+            "on-primary-fixed-variant": "#4d1d2e",
+            "surface-tint": "#b75e7a",
+            "tertiary-container": "#7a5c2e",
+            "on-error": "#690005",
+            "surface-container-lowest": "#0f0f0f",
+            "secondary-fixed-dim": "#3a4f3e",
+            "on-primary": "#ffffff",
+            "surface-container-low": "#1a1a1a",
+            "surface-container": "#1e1e1e",
+            "on-tertiary-fixed-variant": "#5c411c",
+            "surface-variant": "#2c2c2c",
+            "on-secondary": "#ffffff",
+            "surface-container-highest": "#333333",
+            "primary-fixed": "#ffd9e2",
+            "background": "#121212",
+            "surface-bright": "#383838",
+            "primary-container": "#8c445c",
+            "outline-variant": "#4a4a4a",
+            "secondary-fixed": "#b3d4b9",
+            "primary": "#b75e7a",
+            "on-error-container": "#ffdad6",
+            "on-secondary-fixed-variant": "#1d2e21",
+            "on-secondary-container": "#d9f0df",
+            "on-tertiary-fixed": "#2e1d00",
+            "on-background": "#e3e3e3",
+            "error-container": "#93000a",
+            "secondary": "#546e58",
+            "on-primary-container": "#ffecf0",
+            "on-surface": "#e3e3e3",
+            "on-secondary-fixed": "#00210b",
+            "tertiary-fixed-dim": "#e6be7e",
+            "on-primary-fixed": "#3d0016",
+            "surface-dim": "#121212",
+            "secondary-container": "#3a4f3e",
+            "inverse-on-surface": "#121212",
+            "inverse-primary": "#8c445c",
+            "surface-container-high": "#2b2b2b",
+            "inverse-surface": "#e3e3e3",
+            "on-tertiary": "#3d2200",
+            "surface": "#121212"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "gutter": "1.5rem",
+            "gutter-sm": "1rem",
+            "space-xl": "2.5rem",
+            "space-md": "1rem",
+            "margin": "2rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem",
+            "margin-sm": "1.25rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-mobile": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "headline-md": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-mobile": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "display": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "headline-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .glass-panel {
+      background: rgba(44, 44, 44, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .ambient-glow {
+      background: radial-gradient(circle at 50% 50%, rgba(183, 94, 122, 0.4) 0%, rgba(84, 110, 88, 0.25) 45%, rgba(196, 156, 94, 0.15) 75%, transparent 100%);
+    }
+    .card-hover {
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 36px -8px rgba(86, 80, 170, 0.12);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TOP APP BAR -->
+<header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between">
+<!-- Brand Logo -->
+<a class="flex items-center gap-2 group" href="#">
+<div class="w-9 h-9 rounded-full bg-gradient-to-tr from-primary via-primary-container to-secondary-fixed flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">spa</span>
+</div>
+<span class="font-headline-md text-headline-md text-primary tracking-tight font-bold">Emote</span>
+</a>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#features">Features</a>
+<a class="font-label-md text-label-md text-primary font-semibold hover:text-primary transition-colors duration-200" href="#mood-dial">Mood Dial</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#testimonials">Testimonials</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#science">Science</a>
+</nav>
+<!-- Trailing Action -->
+<div class="flex items-center gap-3">
+<a class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 font-label-md text-label-md text-on-primary font-semibold shadow-sm hover:opacity-90 active:scale-95 transition-all duration-200" href="#download">
+          Download Now
+        </a>
+</div>
+</div>
+</header>
+<main class="relative pt-24 md:pt-32">
+<!-- Ambient Backdrop Blobs -->
+<div class="absolute top-16 left-1/2 -translate-x-1/2 w-[850px] h-[650px] ambient-glow rounded-full blur-3xl pointer-events-none -z-10 opacity-70"></div>
+<div class="absolute top-[800px] -left-48 w-96 h-96 bg-secondary-fixed/40 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<div class="absolute top-[1200px] -right-48 w-96 h-96 bg-tertiary-fixed/40 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<!-- HERO SECTION -->
+<section class="max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-16">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+<!-- Hero Text Content -->
+<div class="lg:col-span-6 flex flex-col items-start gap-6">
+<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-lowest/80 border border-outline-variant/30 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Gentle mindfulness for daily equilibrium</span>
+</div>
+<h1 class="font-display text-display tracking-tight text-on-surface">
+            Emote Your Safe Space
+          </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed max-w-xl">
+            Track your daily feelings, uncover emotional patterns with thoughtful analytics, and discover personalized coping rituals in a private, judgment-free sanctuary.
+          </p>
+<!-- CTAs -->
+<div class="flex flex-wrap items-center gap-4 pt-2 w-full sm:w-auto">
+<a class="rounded-full bg-primary hover:bg-primary-container px-8 py-3.5 font-label-md text-label-md text-on-primary font-semibold shadow-md transition-all duration-200 active:scale-95 flex items-center gap-2" href="#download">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>Download Now</span>
+</a>
+<a class="rounded-full glass-panel px-7 py-3.5 font-label-md text-label-md text-on-surface font-semibold hover:border-primary/40 hover:text-primary transition-all duration-200 flex items-center gap-2" href="#features">
+<span class="material-symbols-outlined text-[20px]">explore</span>
+<span>Explore Features</span>
+</a>
+</div>
+<!-- Social Proof / Rating Indicator -->
+<div class="pt-4 flex items-center gap-4">
+<div class="flex -space-x-2">
+<div class="w-9 h-9 rounded-full border-2 border-surface bg-secondary-container flex items-center justify-center text-xs font-bold text-on-secondary-container">AL</div>
+<div class="w-9 h-9 rounded-full border-2 border-surface bg-primary-fixed flex items-center justify-center text-xs font-bold text-on-primary-fixed">MR</div>
+<div class="w-9 h-9 rounded-full border-2 border-surface bg-tertiary-fixed flex items-center justify-center text-xs font-bold text-on-tertiary-fixed">SK</div>
+</div>
+<div>
+<div class="flex items-center gap-1 text-amber-500">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">4.9/5</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Trusted by over 50,000 mindful individuals</p>
+</div>
+</div>
+</div>
+<!-- Hero Mockup Display Area -->
+<div class="lg:col-span-6 relative flex items-center justify-center">
+<!-- Ambient Glow Disc -->
+<div class="absolute w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-gradient-to-tr from-primary-fixed via-secondary-fixed to-tertiary-fixed blur-2xl opacity-60 animate-pulse"></div>
+<!-- Phone Mockup Container -->
+<div class="relative z-10 max-w-[340px] sm:max-w-[380px] w-full transition-transform duration-500 hover:scale-[1.02]">
+<img alt="Emote App Interface on iPhone" class="w-full h-auto drop-shadow-2xl rounded-3xl" src="real_app_screenshot.png"/>
+</div>
+<!-- Floating Badges -->
+<div class="hidden sm:flex absolute -left-4 top-1/4 z-20 glass-panel rounded-full px-4 py-2.5 items-center gap-3 shadow-lg border border-white/80 animate-bounce duration-1000">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm font-bold text-on-surface">Daily Streak 14 Days</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Keep it going, Sarah!</p>
+</div>
+</div>
+<div class="hidden sm:flex absolute -right-4 bottom-1/4 z-20 glass-panel rounded-full px-4 py-2.5 items-center gap-3 shadow-lg border border-white/80">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm font-bold text-on-surface">Morning Check-in Complete ✨</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Feeling Great & Calm</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- INTERACTIVE MOOD EXPERIENCE / PREVIEW STRIP -->
+<section class="max-w-7xl mx-auto px-6 md:px-8 py-16" id="mood-dial">
+<div class="glass-panel rounded-lg p-8 md:p-10 text-center max-w-4xl mx-auto border border-white shadow-sm">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold">The Mood Dial Experience</span>
+<h2 class="font-headline-md text-headline-md text-on-surface mt-2 mb-3">Tune in to what feels true</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xl mx-auto mb-8">
+          A tactile, gentle radial dial helps you express emotions without needing words. Select a state to preview gentle companion guidance.
+        </p>
+<!-- Mood State Selector Pills -->
+<div class="flex flex-wrap justify-center items-center gap-3 mb-8" id="mood-selector-container">
+<button class="mood-tab px-6 py-2.5 rounded-full bg-secondary-container border border-secondary/40 text-on-secondary-fixed-variant font-label-md text-label-md font-semibold transition-all duration-200" id="btn-calm" onclick="setMood('calm')">
+            🌿 Calm
+          </button>
+<button class="mood-tab px-6 py-2.5 rounded-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant font-label-md text-label-md font-semibold transition-all duration-200" id="btn-joyful" onclick="setMood('joyful')">
+            ✨ Joyful
+          </button>
+<button class="mood-tab px-6 py-2.5 rounded-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant font-label-md text-label-md font-semibold transition-all duration-200" id="btn-reflective" onclick="setMood('reflective')">
+            🔮 Reflective
+          </button>
+<button class="mood-tab px-6 py-2.5 rounded-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface-variant font-label-md text-label-md font-semibold transition-all duration-200" id="btn-grateful" onclick="setMood('grateful')">
+            🌸 Grateful
+          </button>
+</div>
+<!-- Dynamic Mood Card Content -->
+<div class="p-6 rounded-DEFAULT bg-surface-container-low/70 border border-outline-variant/20 max-w-lg mx-auto transition-all duration-300" id="mood-feedback-box">
+<p class="font-headline-sm text-headline-sm text-secondary font-bold mb-1" id="mood-title">State: Serene Calm</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant" id="mood-desc">
+            "Your nervous system is resting. Take a gentle breath in through your nose for 4 counts, and gently release."
+          </p>
+</div>
+</div>
+</section>
+<!-- FEATURES BENTO SECTION -->
+<section class="max-w-7xl mx-auto px-6 md:px-8 py-16 md:py-24" id="features">
+<div class="text-center max-w-2xl mx-auto mb-16">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold">Thoughtful Features</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mt-2 mb-4">
+          Designed to nurture emotional clarity
+        </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+          Every interaction in Emote is intentionally soft, frictionless, and clinically grounded to support your mental well-being every day.
+        </p>
+</div>
+<!-- Feature Bento Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Card 1: Daily Check-ins -->
+<div class="glass-panel card-hover rounded-lg p-8 flex flex-col justify-between border border-white/90 shadow-sm relative overflow-hidden group">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary mb-6 group-hover:scale-110 transition-transform duration-200">
+<span class="material-symbols-outlined text-[26px]">adjust</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 font-semibold">Daily Check-ins</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-6">
+              Fast, intuitive emotion journaling with mood dials, tactile micro-tags, and ambient soundscapes to log your state in seconds without cognitive overload.
+            </p>
+</div>
+<div class="pt-4 border-t border-outline-variant/20 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-secondary font-semibold">Tactile & Rapid</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">arrow_forward</span>
+</div>
+</div>
+<!-- Card 2: Mood Analytics -->
+<div class="glass-panel card-hover rounded-lg p-8 flex flex-col justify-between border border-white/90 shadow-sm relative overflow-hidden group">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform duration-200">
+<span class="material-symbols-outlined text-[26px]">insights</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 font-semibold">Mood Analytics</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-6">
+              Deep weekly trends, circadian pattern recognition, emotional triggers, and insightful correlation charts that make compassionate sense of your feelings.
+            </p>
+</div>
+<div class="pt-4 border-t border-outline-variant/20 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-primary font-semibold">Trend Insights</span>
+<span class="material-symbols-outlined text-primary text-[20px]">arrow_forward</span>
+</div>
+</div>
+<!-- Card 3: Coping Strategies -->
+<div class="glass-panel card-hover rounded-lg p-8 flex flex-col justify-between border border-white/90 shadow-sm relative overflow-hidden group">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary mb-6 group-hover:scale-110 transition-transform duration-200">
+<span class="material-symbols-outlined text-[26px]">self_improvement</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 font-semibold">Coping Strategies</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-6">
+              Clinically validated breathing guides, somatic micro-exercises, grounding techniques, and audio meditations crafted for moments of overwhelm or stress.
+            </p>
+</div>
+<div class="pt-4 border-t border-outline-variant/20 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">Validated Care</span>
+<span class="material-symbols-outlined text-tertiary text-[20px]">arrow_forward</span>
+</div>
+</div>
+</div>
+</section>
+<!-- TESTIMONIALS / SCIENCE STRIP -->
+<section class="max-w-7xl mx-auto px-6 md:px-8 py-16" id="testimonials">
+<div class="glass-panel rounded-xl p-8 md:p-12 border border-white shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-bold">Science-Backed Design</span>
+<h2 class="font-headline-md text-headline-md text-on-surface mt-2 mb-4">A gentle habit that rewires emotional resilience</h2>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mb-6">
+            Neuroscience shows that naming an emotion diminishes amygdala reactivity and engages the prefrontal cortex. Emote provides the frictionless ritual to make self-reflection second nature.
+          </p>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-fixed-dim flex items-center justify-center font-bold text-primary">DR</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Dr. Elena Ramos, Ph.D.</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Mindfulness & Affective Neuroscientist</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest/90 rounded-lg p-6 md:p-8 border border-outline-variant/30 space-y-4 shadow-sm">
+<div class="flex gap-1 text-amber-500">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<p class="font-body-md text-body-md italic text-on-surface">
+            "Emote is the only mental wellness app that doesn't trigger guilt. Checking in takes 5 seconds, the visuals are calming, and the insights helped me notice burnout before it hit."
+          </p>
+<p class="font-label-sm text-label-sm text-outline font-semibold">— Sarah K., Product Designer & Daily Emote User</p>
+</div>
+</div>
+</section>
+<!-- DOWNLOAD CALL TO ACTION -->
+<section class="max-w-7xl mx-auto px-6 md:px-8 py-20" id="download">
+<div class="rounded-xl bg-gradient-to-br from-surface-container-highest to-background border border-outline-variant/30 p-10 md:p-16 text-center shadow-lg relative overflow-hidden">
+<div class="max-w-2xl mx-auto relative z-10 space-y-6">
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold">
+            Begin your journey to calm today
+          </h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+            Available on Android. Free forever check-ins with gentle, private mindfulness.
+          </p>
+<div class="flex flex-wrap justify-center gap-4 pt-4">
+<a class="rounded-full bg-primary hover:bg-primary-container text-on-primary font-semibold px-8 py-3.5 font-label-md text-label-md shadow-md hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2" href="emote-your-safe-space.apk" download>
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>Download APK</span>
+</a>
+<a class="rounded-full bg-surface-container-lowest hover:bg-surface-container text-on-surface font-semibold px-8 py-3.5 font-label-md text-label-md shadow-md hover:scale-105 active:scale-95 transition-all duration-200 flex items-center gap-2" href="https://github.com/yvenyvi/mood-tracker.git" target="_blank">
+<span class="material-symbols-outlined text-[20px]">code</span>
+<span>GitHub Repo</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FOOTER -->
+<footer class="bg-surface-container border-t border-outline-variant/30 mt-12">
+<div class="max-w-7xl mx-auto px-6 md:px-8 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+<!-- Left Branding & Copyright -->
+<div class="flex flex-col items-center md:items-start gap-2">
+<a class="font-headline-sm text-headline-sm text-primary font-bold" href="#">Emote</a>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center md:text-left">
+          This project is made by a third year National University student as a requirement to pass the subject Elective 2: Advanced Mobile Programming.
+        </p>
+</div>
+<!-- Links Cluster -->
+<div class="flex flex-wrap justify-center items-center gap-6 text-center">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Mental Health Resources</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Contact Guide</a>
+<a class="font-label-sm text-label-sm text-primary font-medium hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">support_agent</span>
+          Crisis Support
+        </a>
+</div>
+</div>
+</footer>
+<!-- Micro-interaction JS for Interactive Mood preview -->
+<script>
+    const moodData = {
+      calm: {
+        title: "State: Serene Calm",
+        colorClass: "text-secondary",
+        bgContainer: "bg-secondary-container",
+        desc: '"Your nervous system is resting. Take a gentle breath in through your nose for 4 counts, and gently release."'
+      },
+      joyful: {
+        title: "State: Radiating Joy",
+        colorClass: "text-primary",
+        bgContainer: "bg-primary-fixed",
+        desc: '"A warm swell of lightness. Savor this sensation and write down one person or thing that made you smile today."'
+      },
+      reflective: {
+        title: "State: Quietly Reflective",
+        colorClass: "text-surface-tint",
+        bgContainer: "bg-primary-fixed-dim",
+        desc: '"Curiosity meets stillness. Observe your thoughts like drifting clouds—without fixing or judging them."'
+      },
+      grateful: {
+        title: "State: Tenderly Grateful",
+        colorClass: "text-tertiary",
+        bgContainer: "bg-tertiary-fixed",
+        desc: '"Heartful presence. Notice the ground beneath you, the air you breathe, and this quiet moment for yourself."'
+      }
+    };
+
+    function setMood(type) {
+      const data = moodData[type];
+      if (!data) return;
+
+      const titleEl = document.getElementById('mood-title');
+      const descEl = document.getElementById('mood-desc');
+      const feedbackBox = document.getElementById('mood-feedback-box');
+
+      titleEl.innerText = data.title;
+      titleEl.className = `font-headline-sm text-headline-sm font-bold mb-1 ${data.colorClass}`;
+      descEl.innerText = data.desc;
+
+      // Update button highlights
+      document.querySelectorAll('.mood-tab').forEach(btn => {
+        btn.classList.remove('bg-secondary-container', 'bg-primary-fixed', 'bg-tertiary-fixed', 'border-secondary/40', 'border-primary/40');
+        btn.classList.add('bg-surface-container-lowest', 'border-outline-variant/40', 'text-on-surface-variant');
+      });
+
+      const activeBtn = document.getElementById(`btn-${type}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-surface-container-lowest', 'border-outline-variant/40');
+        activeBtn.classList.add(data.bgContainer, 'border-primary/40', 'text-on-surface');
+      }
+    }
+  </script>
+</body></html>
